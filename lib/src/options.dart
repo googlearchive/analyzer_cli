@@ -140,7 +140,7 @@ class CommandLineOptions {
           help: 'Run in batch mode.',
           defaultsTo: false,
           negatable: false)
-      ..addOption('dart-sdk', help: 'The path to the Dart SDK')
+      ..addOption('dart-sdk', help: 'The path to the Dart SDK.')
       ..addOption('package-root',
           abbr: 'p',
           help: 'The path to the package root. The flag package-root is deprecated. Remove to use package information computed by pub.')
@@ -155,7 +155,9 @@ class CommandLineOptions {
           defaultsTo: false,
           negatable: false)
       ..addFlag('no-hints',
-          help: 'Do not show hint results', defaultsTo: false, negatable: false)
+          help: 'Do not show hint results.',
+          defaultsTo: false,
+          negatable: false)
       ..addFlag('ignore-unrecognized-flags',
           help: 'Ignore unrecognized command line flags.',
           defaultsTo: false,
