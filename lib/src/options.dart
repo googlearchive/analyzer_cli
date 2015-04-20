@@ -137,7 +137,7 @@ class CommandLineOptions {
     var parser = new CommandLineParser()
       ..addFlag('batch',
           abbr: 'b',
-          help: 'Run in batch mode',
+          help: 'Run in batch mode.',
           defaultsTo: false,
           negatable: false)
       ..addOption('dart-sdk', help: 'The path to the Dart SDK')
@@ -145,89 +145,89 @@ class CommandLineOptions {
           abbr: 'p',
           help: 'The path to the package root. The flag package-root is deprecated. Remove to use package information computed by pub.')
       ..addOption('format',
-          help: 'Specifies the format in which errors are displayed')
+          help: 'Specifies the format in which errors are displayed.')
       ..addFlag('machine',
-          help: 'Print errors in a format suitable for parsing (deprecated)',
+          help: 'Print errors in a format suitable for parsing (deprecated).',
           defaultsTo: false,
           negatable: false)
       ..addFlag('version',
-          help: 'Print the analyzer version',
+          help: 'Print the analyzer version.',
           defaultsTo: false,
           negatable: false)
       ..addFlag('no-hints',
           help: 'Do not show hint results', defaultsTo: false, negatable: false)
       ..addFlag('ignore-unrecognized-flags',
-          help: 'Ignore unrecognized command line flags',
+          help: 'Ignore unrecognized command line flags.',
           defaultsTo: false,
           negatable: false)
       ..addFlag('fatal-warnings',
-          help: 'Treat non-type warnings as fatal',
+          help: 'Treat non-type warnings as fatal.',
           defaultsTo: false,
           negatable: false)
       ..addFlag('package-warnings',
-          help: 'Show warnings from package: imports',
+          help: 'Show warnings from package: imports.',
           defaultsTo: false,
           negatable: false)
       ..addFlag('show-package-warnings',
-          help: 'Show warnings from package: imports (deprecated)',
+          help: 'Show warnings from package: imports (deprecated).',
           defaultsTo: false,
           negatable: false)
       ..addFlag('perf',
-          help: 'Show performance statistics',
+          help: 'Show performance statistics.',
           defaultsTo: false,
           negatable: false)
       ..addFlag('warnings',
-          help: 'Show warnings from SDK imports',
+          help: 'Show warnings from SDK imports.',
           defaultsTo: false,
           negatable: false)
       ..addFlag('show-sdk-warnings',
-          help: 'Show warnings from SDK imports (deprecated)',
+          help: 'Show warnings from SDK imports (deprecated).',
           defaultsTo: false,
           negatable: false)
       ..addFlag('help',
           abbr: 'h',
-          help: 'Display this help message',
+          help: 'Display this help message.',
           defaultsTo: false,
           negatable: false)
       ..addOption('url-mapping',
           help: '--url-mapping=libraryUri,/path/to/library.dart directs the '
-          'analyzer to use "library.dart" as the source for an import ' 'of "libraryUri"',
+          'analyzer to use "library.dart" as the source for an import ' 'of "libraryUri".',
           allowMultiple: true)
       //
       // Hidden flags.
       //
       ..addFlag('enable-async',
-          help: 'Enable support for the proposed async feature',
+          help: 'Enable support for the proposed async feature.',
           defaultsTo: false,
           negatable: false,
           hide: true)
       ..addFlag('enable-enum',
-          help: 'Enable support for the proposed enum feature',
+          help: 'Enable support for the proposed enum feature.',
           defaultsTo: false,
           negatable: false,
           hide: true)
       ..addFlag('enable-null-aware-operators',
-          help: 'Enable support for null-aware operators (DEP 9)',
+          help: 'Enable support for null-aware operators (DEP 9).',
           defaultsTo: false,
           negatable: false,
           hide: true)
       ..addFlag('enable-strict-call-checks',
-          help: 'Fix issue 21938',
+          help: 'Fix issue 21938.',
           defaultsTo: false,
           negatable: false,
           hide: true)
       ..addFlag('log',
-          help: 'Log additional messages and exceptions',
+          help: 'Log additional messages and exceptions.',
           defaultsTo: false,
           negatable: false,
           hide: true)
       ..addFlag('warm-perf',
-          help: 'Show both cold and warm performance statistics',
+          help: 'Show both cold and warm performance statistics.',
           defaultsTo: false,
           negatable: false,
           hide: true)
       ..addFlag('enable_type_checks',
-          help: 'Check types in constant evaluation',
+          help: 'Check types in constant evaluation.',
           defaultsTo: false,
           negatable: false,
           hide: true);
