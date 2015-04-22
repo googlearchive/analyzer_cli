@@ -7,13 +7,14 @@ library analyzer_cli.src.options;
 import 'dart:io';
 
 import 'package:args/args.dart';
+import 'package:cli_util/cli_util.dart' show getSdkDir;
 
 const _binaryName = 'dartanalyzer';
 
 /// Analyzer commandline configuration options.
 class CommandLineOptions {
   /// The path to the dart SDK
-  final String dartSdkPath;
+  String dartSdkPath;
 
   /// A table mapping the names of defined variables to their values.
   final Map<String, String> definedVariables;
@@ -103,7 +104,16 @@ class CommandLineOptions {
     CommandLineOptions options = _parse(args);
     // check SDK
     {
+      // infer if unspecified
+      if (options.dartSdkPath == null) {
+        Directory sdkDir = getSdkDir(args);
+        if (sdkDir != null) {
+          options.dartSdkPath  = sdkDir.path;
+        }
+      }
+
       var sdkPath = options.dartSdkPath;
+
       // check that SDK is specified
       if (sdkPath == null) {
         print('Usage: $_binaryName: no Dart SDK found.');
