@@ -4,6 +4,7 @@
 
 import 'package:unittest/unittest.dart';
 
+import 'error_test.dart' as error;
 import 'options_test.dart' as options;
 
 main() {
@@ -11,5 +12,6 @@ main() {
   filterStacks = true;
   formatStacks = true;
 
+  error.main();
   options.main();
 }
