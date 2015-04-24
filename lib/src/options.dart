@@ -194,7 +194,8 @@ class CommandLineOptions {
       ..addOption('url-mapping',
           help: '--url-mapping=libraryUri,/path/to/library.dart directs the '
           'analyzer to use "library.dart" as the source for an import ' 'of "libraryUri".',
-          allowMultiple: true)
+          allowMultiple: true,
+          splitCommas: false)
       //
       // Hidden flags.
       //
@@ -322,7 +323,7 @@ class CommandLineParser {
   /// See [ArgParser.addOption()].
   void addOption(String name, {String abbr, String help, List<String> allowed,
       Map<String, String> allowedHelp, String defaultsTo, void callback(value),
-      bool allowMultiple: false}) {
+      bool allowMultiple: false, bool splitCommas}) {
     _knownFlags.add(name);
     _parser.addOption(name,
         abbr: abbr,
@@ -331,7 +332,8 @@ class CommandLineParser {
         allowedHelp: allowedHelp,
         defaultsTo: defaultsTo,
         callback: callback,
-        allowMultiple: allowMultiple);
+        allowMultiple: allowMultiple,
+        splitCommas: splitCommas);
   }
 
   /// Generates a string displaying usage information for the defined options.
