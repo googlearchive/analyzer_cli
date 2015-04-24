@@ -4,7 +4,7 @@ description: Command line interface for the Dart Analyzer.
 author: Dart Team <misc@dartlang.org>
 homepage: https://github.com/dart-lang/analyzer_cli
 dependencies:
-  analyzer: '>=0.24.0 <0.25.0'
+  analyzer: '>=0.24.0 <0.26.0'
   args: '>=0.13.0 <0.14.0'
 environment:
   sdk: '>=1.0.0 <2.0.0'
