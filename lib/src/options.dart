@@ -38,6 +38,9 @@ class CommandLineOptions {
   /// Whether to ignore unrecognized flags
   final bool ignoreUnrecognizedFlags;
 
+  /// Whether to report lints
+  final bool lints;
+
   /// Whether to log additional analysis messages and exceptions
   final bool log;
 
@@ -84,6 +87,7 @@ class CommandLineOptions {
         enableStrictCallChecks = args['enable-strict-call-checks'],
         enableTypeChecks = args['enable_type_checks'],
         ignoreUnrecognizedFlags = args['ignore-unrecognized-flags'],
+        lints = args['lints'],
         log = args['log'],
         machineFormat = args['machine'] || args['format'] == 'machine',
         packageRootPath = args['package-root'],
@@ -154,6 +158,8 @@ class CommandLineOptions {
           help: 'Print the analyzer version.',
           defaultsTo: false,
           negatable: false)
+      ..addFlag('lints',
+          help: 'Show lint results.', defaultsTo: false, negatable: false)
       ..addFlag('no-hints',
           help: 'Do not show hint results.',
           defaultsTo: false,
