@@ -74,13 +74,13 @@ main() {
 
     test('no-hints', () {
       CommandLineOptions options = CommandLineOptions
-      .parse(['--dart-sdk', '.', '--no-hints', 'foo.dart']);
+          .parse(['--dart-sdk', '.', '--no-hints', 'foo.dart']);
       expect(options.disableHints, isTrue);
     });
 
     test('lints', () {
-      CommandLineOptions options = CommandLineOptions
-      .parse(['--dart-sdk', '.', '--lints', 'foo.dart']);
+      CommandLineOptions options =
+          CommandLineOptions.parse(['--dart-sdk', '.', '--lints', 'foo.dart']);
       expect(options.lints, isTrue);
     });
 
