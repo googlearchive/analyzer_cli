@@ -16,7 +16,6 @@ bool _anyError(AnalysisError error) => true;
 /// Returns `true` if [AnalysisError] should be printed.
 typedef bool _ErrorFilter(AnalysisError error);
 
-
 /// Helper for formatting [AnalysisError]s.
 /// The two format options are a user consumable format and a machine consumable format.
 class ErrorFormatter {
@@ -111,12 +110,10 @@ class ErrorFormatter {
         if (options.warningsAreFatal) {
           errorCount++;
         } else {
-          if (error.errorCode.type == ErrorType.HINT) {
-            hintCount++;
-          } else {
-            warnCount++;
-          }
+          warnCount++;
         }
+      } else if (error.errorCode.type == ErrorType.HINT) {
+        hintCount++;
       } else if (error.errorCode.type == ErrorType.LINT) {
         lintCount++;
       }
