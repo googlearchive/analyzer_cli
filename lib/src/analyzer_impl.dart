@@ -24,6 +24,7 @@ import 'package:analyzer/src/generated/source.dart';
 import 'package:analyzer/src/generated/source_io.dart';
 import 'package:analyzer/src/generated/utilities_general.dart';
 import 'package:analyzer_cli/src/error_formatter.dart';
+import 'package:analyzer_cli/src/lint.dart';
 import 'package:analyzer_cli/src/options.dart';
 
 DirectoryBasedDartSdk sdk;
@@ -206,6 +207,7 @@ class AnalyzerImpl {
         _analyzeFunctionBodiesPredicate;
     contextOptions.generateImplicitErrors = options.showPackageWarnings;
     contextOptions.generateSdkErrors = options.showSdkWarnings;
+    contextOptions.lint = options.lints;
     context.analysisOptions = contextOptions;
 
     librarySource = computeLibrarySource();
@@ -244,6 +246,8 @@ class AnalyzerImpl {
     if (sourcePath == null) {
       throw new ArgumentError("sourcePath cannot be null");
     }
+    // register lints
+    registerLints();
     // prepare context
     prepareAnalysisContext();
   }

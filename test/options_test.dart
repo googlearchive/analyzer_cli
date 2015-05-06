@@ -16,6 +16,7 @@ main() {
       expect(options, isNotNull);
       expect(options.dartSdkPath, isNotNull);
       expect(options.disableHints, isFalse);
+      expect(options.lints, isFalse);
       expect(options.displayVersion, isFalse);
       expect(options.enableStrictCallChecks, isFalse);
       expect(options.enableTypeChecks, isFalse);
@@ -75,6 +76,12 @@ main() {
       CommandLineOptions options = CommandLineOptions
           .parse(['--dart-sdk', '.', '--no-hints', 'foo.dart']);
       expect(options.disableHints, isTrue);
+    });
+
+    test('lints', () {
+      CommandLineOptions options =
+          CommandLineOptions.parse(['--dart-sdk', '.', '--lints', 'foo.dart']);
+      expect(options.lints, isTrue);
     });
 
     test('package root', () {
