@@ -11,5 +11,6 @@ dependencies:
 environment:
   sdk: '>=1.0.0 <2.0.0'
 dev_dependencies:
+  mockito: '>=0.8.2 <0.9.0'
   unittest: '>=0.11.0 <0.12.0'
 

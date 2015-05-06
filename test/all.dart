@@ -6,6 +6,7 @@ import 'package:unittest/unittest.dart';
 
 import 'error_test.dart' as error;
 import 'options_test.dart' as options;
+import 'reporter_test.dart' as reporter;
 
 main() {
   // Tidy up output.
@@ -14,4 +15,5 @@ main() {
 
   error.main();
   options.main();
+  reporter.main();
 }
