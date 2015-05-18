@@ -14,10 +14,14 @@ import 'package:analyzer/src/generated/java_engine.dart';
 import 'package:analyzer/src/generated/utilities_general.dart';
 import 'package:analyzer_cli/src/analyzer_impl.dart';
 import 'package:analyzer_cli/src/options.dart';
+import 'package:linter/src/plugin/linter_plugin.dart';
+import 'package:plugin/manager.dart';
+import 'package:plugin/plugin.dart';
 
 /// The entry point for the analyzer.
 void main(List<String> args) {
   StringUtilities.INTERNER = new MappedInterner();
+  _processPlugins();
   CommandLineOptions options = CommandLineOptions.parse(args);
   if (options.shouldBatch) {
     BatchRunner.runAsBatch(args, (List<String> args) {
@@ -29,7 +33,7 @@ void main(List<String> args) {
   }
 }
 
-_analyzeAll(CommandLineOptions options, bool isBatch) {
+ErrorSeverity _analyzeAll(CommandLineOptions options, bool isBatch) {
   if (!options.machineFormat) {
     stdout.writeln("Analyzing ${options.sourceFiles}...");
   }
@@ -56,7 +60,19 @@ _analyzeAll(CommandLineOptions options, bool isBatch) {
   return allResult;
 }
 
-_runAnalyzer(CommandLineOptions options, String sourcePath, bool isBatch) {
+class f {}
+
+void _processPlugins() {
+  List<Plugin> plugins = <Plugin>[];
+  // TODO(pquitslund): add once engine plugin imports are fixed
+  //plugins.add(AnalysisEngine.instance.enginePlugin);
+  plugins.add(linterPlugin);
+  ExtensionManager manager = new ExtensionManager();
+  manager.processPlugins(plugins);
+}
+
+ErrorSeverity _runAnalyzer(
+    CommandLineOptions options, String sourcePath, bool isBatch) {
   if (options.warmPerf) {
     int startTime = currentTimeMillis();
     AnalyzerImpl analyzer =
@@ -89,10 +105,12 @@ _runAnalyzer(CommandLineOptions options, String sourcePath, bool isBatch) {
 
 typedef ErrorSeverity BatchRunnerHandler(List<String> args);
 
-/// Provides a framework to read command line options from stdin and feed them to a callback.
+/// Provides a framework to read command line options from stdin and feed them
+/// to a callback.
 class BatchRunner {
-  /// Run the tool in 'batch' mode, receiving command lines through stdin and returning pass/fail
-  /// status through stdout. This feature is intended for use in unit testing.
+  /// Run the tool in 'batch' mode, receiving command lines through stdin and
+  /// returning pass/fail status through stdout. This feature is intended for
+  /// use in unit testing.
   static void runAsBatch(List<String> sharedArgs, BatchRunnerHandler handler) {
     stdout.writeln('>>> BATCH START');
     Stopwatch stopwatch = new Stopwatch();
