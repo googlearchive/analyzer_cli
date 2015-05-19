@@ -247,7 +247,9 @@ class AnalyzerImpl {
       throw new ArgumentError("sourcePath cannot be null");
     }
     // register lints
-    registerLints();
+    if (options.lints) {
+      registerLints();
+    }
     // prepare context
     prepareAnalysisContext();
   }
