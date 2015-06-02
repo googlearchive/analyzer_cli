@@ -4,6 +4,7 @@
 .project
 .pub/
 .settings/
+analyzer_cli.iml
 build/
 packages
 pubspec.lock
