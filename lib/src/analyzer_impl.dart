@@ -12,7 +12,6 @@ import 'package:analyzer/file_system/physical_file_system.dart';
 import 'package:analyzer/source/package_map_provider.dart';
 import 'package:analyzer/source/package_map_resolver.dart';
 import 'package:analyzer/source/pub_package_map_provider.dart';
-import 'package:analyzer/src/generated/constant.dart';
 import 'package:analyzer/src/generated/element.dart';
 import 'package:analyzer/src/generated/engine.dart';
 import 'package:analyzer/src/generated/error.dart';
@@ -35,19 +34,11 @@ int currentTimeMillis() => new DateTime.now().millisecondsSinceEpoch;
 
 /// Analyzes single library [File].
 class AnalyzerImpl {
-  final String sourcePath;
-
   final CommandLineOptions options;
   final int startTime;
 
-  /// True if the analyzer is running in batch mode.
-  final bool isBatch;
-
-  ContentCache contentCache = new ContentCache();
-
-  SourceFactory sourceFactory;
-  AnalysisContext context;
-  Source librarySource;
+  final AnalysisContext context;
+  final Source librarySource;
   /// All [Source]s references by the analyzed library.
   final Set<Source> sources = new Set<Source>();
 
@@ -65,12 +56,7 @@ class AnalyzerImpl {
   /// specified the "--package-warnings" option.
   String _selfPackageName;
 
-  AnalyzerImpl(String sourcePath, this.options, this.startTime, this.isBatch)
-      : sourcePath = _normalizeSourcePath(sourcePath) {
-    if (sdk == null) {
-      sdk = new DirectoryBasedDartSdk(new JavaFile(options.dartSdkPath));
-    }
-  }
+  AnalyzerImpl(this.context, this.librarySource, this.options, this.startTime);
 
   /// Returns the maximal [ErrorSeverity] of the recorded errors.
   ErrorSeverity get maxErrorSeverity {
@@ -137,20 +123,6 @@ class AnalyzerImpl {
     return _analyzeSync(printMode);
   }
 
-  Source computeLibrarySource() {
-    JavaFile sourceFile = new JavaFile(sourcePath);
-    Source source = sdk.fromFileUri(sourceFile.toURI());
-    if (source != null) {
-      return source;
-    }
-    source = new FileBasedSource.con2(sourceFile.toURI(), sourceFile);
-    Uri uri = context.sourceFactory.restoreUri(source);
-    if (uri == null) {
-      return source;
-    }
-    return new FileBasedSource.con2(uri, sourceFile);
-  }
-
   /// Create and return the source factory to be used by the analysis context.
   SourceFactory createSourceFactory() {
     List<UriResolver> resolvers = [
@@ -175,46 +147,6 @@ class AnalyzerImpl {
     return new SourceFactory(resolvers);
   }
 
-  void prepareAnalysisContext() {
-    sourceFactory = createSourceFactory();
-    context = AnalysisEngine.instance.createAnalysisContext();
-    context.sourceFactory = sourceFactory;
-    Map<String, String> definedVariables = options.definedVariables;
-    if (!definedVariables.isEmpty) {
-      DeclaredVariables declaredVariables = context.declaredVariables;
-      definedVariables.forEach((String variableName, String value) {
-        declaredVariables.define(variableName, value);
-      });
-    }
-    // Uncomment the following to have errors reported on stdout and stderr
-    AnalysisEngine.instance.logger = new StdLogger(options.log);
-
-    // set options for context
-    AnalysisOptionsImpl contextOptions = new AnalysisOptionsImpl();
-    contextOptions.cacheSize = _maxCacheSize;
-    contextOptions.hint = !options.disableHints;
-    contextOptions.enableNullAwareOperators = options.enableNullAwareOperators;
-    contextOptions.enableStrictCallChecks = options.enableStrictCallChecks;
-    contextOptions.analyzeFunctionBodiesPredicate =
-        _analyzeFunctionBodiesPredicate;
-    contextOptions.generateImplicitErrors = options.showPackageWarnings;
-    contextOptions.generateSdkErrors = options.showSdkWarnings;
-    contextOptions.lint = options.lints;
-    context.analysisOptions = contextOptions;
-
-    librarySource = computeLibrarySource();
-
-    Uri libraryUri = librarySource.uri;
-    if (libraryUri.scheme == 'package' && libraryUri.pathSegments.length > 0) {
-      _selfPackageName = libraryUri.pathSegments[0];
-    }
-
-    // Create and add a ChangeSet
-    ChangeSet changeSet = new ChangeSet();
-    changeSet.addedSource(librarySource);
-    context.applyChanges(changeSet);
-  }
-
   /// Fills [errorInfos] using [sources].
   void prepareErrors() {
     for (Source source in sources) {
@@ -235,35 +167,14 @@ class AnalyzerImpl {
   void setupForAnalysis() {
     sources.clear();
     errorInfos.clear();
-    if (sourcePath == null) {
-      throw new ArgumentError("sourcePath cannot be null");
-    }
     // register lints
     if (options.lints) {
       registerLints();
     }
-    // prepare context
-    prepareAnalysisContext();
-  }
-
-  bool _analyzeFunctionBodiesPredicate(Source source) {
-    // TODO(paulberry): This function will need to be updated when we add the
-    // ability to suppress errors, warnings, and hints for files reached via
-    // custom URI's using the "--url-mapping" flag.
-    if (source.uri.scheme == 'dart') {
-      if (isBatch) {
-        // When running in batch mode, the SDK files are cached from one
-        // analysis run to the next.  So we need to parse function bodies even
-        // if the user hasn't asked for errors/warnings from the SDK, since
-        // they might ask for errors/warnings from the SDK in the future.
-        return true;
-      }
-      return options.showSdkWarnings;
+    Uri libraryUri = librarySource.uri;
+    if (libraryUri.scheme == 'package' && libraryUri.pathSegments.length > 0) {
+      _selfPackageName = libraryUri.pathSegments[0];
     }
-    if (_isOtherPackage(source.uri)) {
-      return options.showPackageWarnings;
-    }
-    return true;
   }
 
   /// The sync version of analysis.
@@ -271,7 +182,7 @@ class AnalyzerImpl {
     // don't try to analyze parts
     if (context.computeKindOf(librarySource) == SourceKind.PART) {
       print("Only libraries can be analyzed.");
-      print("$sourcePath is a part and can not be analyzed.");
+      print("${librarySource.fullName} is a part and can not be analyzed.");
       return ErrorSeverity.ERROR;
     }
     // resolve library
@@ -392,11 +303,6 @@ class AnalyzerImpl {
     }
     // not found
     return null;
-  }
-
-  /// Convert [sourcePath] into an absolute path.
-  static String _normalizeSourcePath(String sourcePath) {
-    return new File(sourcePath).absolute.path;
   }
 }
 
