@@ -4,7 +4,6 @@
 
 library analyzer_cli.src.analyzer_impl;
 
-import 'dart:async';
 import 'dart:collection';
 import 'dart:io';
 
@@ -129,13 +128,6 @@ class AnalyzerImpl {
   }
 
   /// Treats the [sourcePath] as the top level library and analyzes it using a
-  /// asynchronous algorithm over the analysis engine.
-  void analyzeAsync() {
-    setupForAnalysis();
-    _analyzeAsync();
-  }
-
-  /// Treats the [sourcePath] as the top level library and analyzes it using a
   /// synchronous algorithm over the analysis engine. If [printMode] is `0`,
   /// then no error or performance information is printed. If [printMode] is `1`,
   /// then both will be printed. If [printMode] is `2`, then only performance
@@ -252,42 +244,6 @@ class AnalyzerImpl {
     }
     // prepare context
     prepareAnalysisContext();
-  }
-
-  /// The async version of the analysis
-  void _analyzeAsync() {
-    new Future(context.performAnalysisTask).then((AnalysisResult result) {
-      List<ChangeNotice> notices = result.changeNotices;
-      if (result.hasMoreWork) {
-        // There is more work, record the set of sources, and then call self
-        // again to perform next task
-        for (ChangeNotice notice in notices) {
-          sources.add(notice.source);
-          sourceErrorsMap[notice.source] = notice;
-        }
-        return _analyzeAsync();
-      }
-      //
-      // There are not any more tasks, set error code and print performance
-      // numbers.
-      //
-      // prepare errors
-      sourceErrorsMap.forEach((k, v) {
-        errorInfos.add(sourceErrorsMap[k]);
-      });
-
-      // print errors and performance numbers
-      _printErrorsAndPerf();
-
-      // compute max severity and set exitCode
-      ErrorSeverity status = maxErrorSeverity;
-      if (status == ErrorSeverity.WARNING && options.warningsAreFatal) {
-        status = ErrorSeverity.ERROR;
-      }
-      exitCode = status.ordinal;
-    }).catchError((ex, st) {
-      AnalysisEngine.instance.logger.logError("$ex\n$st");
-    });
   }
 
   bool _analyzeFunctionBodiesPredicate(Source source) {
