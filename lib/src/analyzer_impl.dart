@@ -260,21 +260,6 @@ class AnalyzerImpl {
     ErrorFormatter formatter =
         new ErrorFormatter(sink, options, _isDesiredError);
     formatter.formatErrors(errorInfos);
-
-    // print performance numbers
-    if (options.perf || options.warmPerf) {
-      int totalTime = currentTimeMillis() - startTime;
-      int otherTime = totalTime;
-      for (PerformanceTag tag in PerformanceTag.all) {
-        if (tag != PerformanceTag.UNKNOWN) {
-          int tagTime = tag.elapsedMs;
-          stdout.writeln('${tag.label}:$tagTime');
-          otherTime -= tagTime;
-        }
-      }
-      stdout.writeln('other:$otherTime');
-      stdout.writeln("total:$totalTime");
-    }
   }
 
   /// Compute the severity of the error; however, if

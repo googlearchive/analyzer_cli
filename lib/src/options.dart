@@ -51,9 +51,6 @@ class CommandLineOptions {
   /// The path to the package root
   final String packageRootPath;
 
-  /// Whether to show performance statistics
-  final bool perf;
-
   /// Batch mode (for unit testing)
   final bool shouldBatch;
 
@@ -65,9 +62,6 @@ class CommandLineOptions {
 
   /// The source files to analyze
   final List<String> sourceFiles;
-
-  /// Whether to show both cold and hot performance statistics
-  final bool warmPerf;
 
   /// Whether to treat warnings as fatal
   final bool warningsAreFatal;
@@ -92,13 +86,11 @@ class CommandLineOptions {
         log = args['log'],
         machineFormat = args['machine'] || args['format'] == 'machine',
         packageRootPath = args['package-root'],
-        perf = args['perf'],
         shouldBatch = args['batch'],
         showPackageWarnings = args['show-package-warnings'] ||
             args['package-warnings'],
         showSdkWarnings = args['show-sdk-warnings'] || args['warnings'],
         sourceFiles = args.rest,
-        warmPerf = args['warm-perf'],
         warningsAreFatal = args['fatal-warnings'],
         this.customUrlMappings = customUrlMappings;
 
@@ -190,10 +182,6 @@ class CommandLineOptions {
           help: 'Show warnings from package: imports (deprecated).',
           defaultsTo: false,
           negatable: false)
-      ..addFlag('perf',
-          help: 'Show performance statistics.',
-          defaultsTo: false,
-          negatable: false)
       ..addFlag('warnings',
           help: 'Show warnings from SDK imports.',
           defaultsTo: false,
@@ -237,11 +225,6 @@ class CommandLineOptions {
           hide: true)
       ..addFlag('log',
           help: 'Log additional messages and exceptions.',
-          defaultsTo: false,
-          negatable: false,
-          hide: true)
-      ..addFlag('warm-perf',
-          help: 'Show both cold and warm performance statistics.',
           defaultsTo: false,
           negatable: false,
           hide: true)
