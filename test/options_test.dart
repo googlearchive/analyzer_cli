@@ -27,12 +27,10 @@ main() {
         expect(options.log, isFalse);
         expect(options.machineFormat, isFalse);
         expect(options.packageRootPath, isNull);
-        expect(options.perf, isFalse);
         expect(options.shouldBatch, isFalse);
         expect(options.showPackageWarnings, isFalse);
         expect(options.showSdkWarnings, isFalse);
         expect(options.sourceFiles, equals(['foo.dart']));
-        expect(options.warmPerf, isFalse);
         expect(options.warningsAreFatal, isFalse);
         expect(options.customUrlMappings, isNotNull);
         expect(options.customUrlMappings.isEmpty, isTrue);
@@ -97,12 +95,6 @@ main() {
         CommandLineOptions options = CommandLineOptions
             .parse(['--dart-sdk', '.', '--package-warnings', 'foo.dart']);
         expect(options.showPackageWarnings, isTrue);
-      });
-
-      test('perf', () {
-        CommandLineOptions options =
-            CommandLineOptions.parse(['--dart-sdk', '.', '--perf', 'foo.dart']);
-        expect(options.perf, isTrue);
       });
 
       test('sdk warnings', () {
