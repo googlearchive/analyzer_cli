@@ -25,7 +25,7 @@ import 'package:analyzer/src/generated/source_io.dart';
 import 'package:analyzer_cli/src/analyzer_impl.dart';
 import 'package:analyzer_cli/src/options.dart';
 import 'package:linter/src/plugin/linter_plugin.dart';
-//import 'package:package_config/packages_file.dart' as pkgfile show parse;
+import 'package:package_config/packages_file.dart' as pkgfile show parse;
 import 'package:path/path.dart' as path;
 import 'package:plugin/manager.dart';
 import 'package:plugin/plugin.dart';
@@ -233,12 +233,20 @@ class Driver {
     ];
 
     if (options.packageConfigPath != null) {
-      // TODO(pquitslund): plug into new resolver once implemented
-      // https://github.com/dart-lang/sdk/issues/23615
-      // Uri fileUri = new Uri.file(options.packageConfigPath);
-      // File configFile = new File.fromUri(fileUri);
-      // List<int> bytes = configFile.readAsBytesSync();
-      // Map<String, Uri> map = pkgfile.parse(bytes, fileUri);
+      String packageConfigPath = options.packageConfigPath;
+      Uri fileUri = new Uri.file(packageConfigPath);
+      try {
+        File configFile = new File.fromUri(fileUri);
+        List<int> bytes = configFile.readAsBytesSync();
+        Map<String, Uri> map = pkgfile.parse(bytes, fileUri);
+        // TODO(pquitslund): plug into new resolver once implemented
+        // https://github.com/dart-lang/sdk/issues/23615
+      } catch (e) {
+        printAndFail(
+            'Unable to read package config data from $packageConfigPath: $e');
+      }
+      printAndFail(
+          'Package config files are not supported yet. For status see: https://github.com/dart-lang/sdk/issues/23373');
     } else if (options.packageRootPath != null) {
       JavaFile packageDirectory = new JavaFile(options.packageRootPath);
       resolvers.add(new PackageUriResolver([packageDirectory]));

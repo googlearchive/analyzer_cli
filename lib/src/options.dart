@@ -11,6 +11,12 @@ import 'package:cli_util/cli_util.dart' show getSdkDir;
 
 const _binaryName = 'dartanalyzer';
 
+/// Print the given message and exit with the given [exitCode]
+void printAndFail(String message, {int exitCode: 15}) {
+  print(message);
+  exit(exitCode);
+}
+
 /// Analyzer commandline configuration options.
 class CommandLineOptions {
   /// The path to the dart SDK
@@ -290,11 +296,6 @@ class CommandLineOptions {
       _showUsage(parser);
       exit(15);
     }
-  }
-
-  static void _printAndFail(String msg) {
-    print(msg);
-    exit(15);
   }
 
   static _showUsage(parser) {
