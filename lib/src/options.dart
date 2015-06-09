@@ -11,6 +11,12 @@ import 'package:cli_util/cli_util.dart' show getSdkDir;
 
 const _binaryName = 'dartanalyzer';
 
+/// Print the given message and exit with the given [exitCode]
+void printAndFail(String message, {int exitCode: 15}) {
+  print(message);
+  exit(exitCode);
+}
+
 /// Analyzer commandline configuration options.
 class CommandLineOptions {
   /// The path to the dart SDK
@@ -51,6 +57,9 @@ class CommandLineOptions {
   /// The path to the package root
   final String packageRootPath;
 
+  /// The path to a `.packages` configuration file
+  final String packageConfigPath;
+
   /// Batch mode (for unit testing)
   final bool shouldBatch;
 
@@ -85,6 +94,7 @@ class CommandLineOptions {
         lints = args['lints'],
         log = args['log'],
         machineFormat = args['machine'] || args['format'] == 'machine',
+        packageConfigPath = args['packages'],
         packageRootPath = args['package-root'],
         shouldBatch = args['batch'],
         showPackageWarnings = args['show-package-warnings'] ||
@@ -104,7 +114,7 @@ class CommandLineOptions {
       if (options.dartSdkPath == null) {
         Directory sdkDir = getSdkDir(args);
         if (sdkDir != null) {
-          options.dartSdkPath  = sdkDir.path;
+          options.dartSdkPath = sdkDir.path;
         }
       }
 
@@ -112,15 +122,22 @@ class CommandLineOptions {
 
       // check that SDK is specified
       if (sdkPath == null) {
-        print('Usage: $_binaryName: no Dart SDK found.');
-        exit(15);
+        printAndFail('Usage: $_binaryName: no Dart SDK found.');
       }
       // check that SDK is existing directory
       if (!(new Directory(sdkPath)).existsSync()) {
-        print('Usage: $_binaryName: invalid Dart SDK path: $sdkPath');
-        exit(15);
+        printAndFail('Usage: $_binaryName: invalid Dart SDK path: $sdkPath');
       }
     }
+
+    // check package config
+    {
+      if (options.packageRootPath != null &&
+          options.packageConfigPath != null) {
+        printAndFail("Cannot specify both '--package-root' and '--packages.");
+      }
+    }
+
     // OK
     return options;
   }
@@ -147,9 +164,11 @@ class CommandLineOptions {
           defaultsTo: false,
           negatable: false)
       ..addOption('dart-sdk', help: 'The path to the Dart SDK.')
+      ..addOption('packages',
+          help: 'Path to the package resolution configuration file, which supplies a mapping of package names to paths.  This option cannot be used with --package-root.')
       ..addOption('package-root',
           abbr: 'p',
-          help: 'The path to the package root. The flag package-root is deprecated. Remove to use package information computed by pub.')
+          help: 'Path to a package root directory (deprecated). This option cannot be used with --packages.')
       ..addOption('format',
           help: 'Specifies the format in which errors are displayed.')
       ..addFlag('machine',
@@ -408,7 +427,7 @@ class CommandLineParser {
     }
   }
 
-  _getNextFlagIndex(args, i) {
+  int _getNextFlagIndex(args, i) {
     for (; i < args.length; ++i) {
       if (args[i].startsWith('--')) {
         return i;
