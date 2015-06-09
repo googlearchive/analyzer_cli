@@ -122,11 +122,11 @@ class CommandLineOptions {
 
       // check that SDK is specified
       if (sdkPath == null) {
-        _printAndFail('Usage: $_binaryName: no Dart SDK found.');
+        printAndFail('Usage: $_binaryName: no Dart SDK found.');
       }
       // check that SDK is existing directory
       if (!(new Directory(sdkPath)).existsSync()) {
-        _printAndFail('Usage: $_binaryName: invalid Dart SDK path: $sdkPath');
+        printAndFail('Usage: $_binaryName: invalid Dart SDK path: $sdkPath');
       }
     }
 
@@ -134,7 +134,7 @@ class CommandLineOptions {
     {
       if (options.packageRootPath != null &&
           options.packageConfigPath != null) {
-        _printAndFail("Cannot specify both '--package-root' and '--packages.");
+        printAndFail("Cannot specify both '--package-root' and '--packages.");
       }
     }
 
