@@ -7,11 +7,6 @@ library analyzer_cli.src.analyzer_impl;
 import 'dart:collection';
 import 'dart:io';
 
-import 'package:analyzer/file_system/file_system.dart' show Folder;
-import 'package:analyzer/file_system/physical_file_system.dart';
-import 'package:analyzer/source/package_map_provider.dart';
-import 'package:analyzer/source/package_map_resolver.dart';
-import 'package:analyzer/source/pub_package_map_provider.dart';
 import 'package:analyzer/src/generated/element.dart';
 import 'package:analyzer/src/generated/engine.dart';
 import 'package:analyzer/src/generated/error.dart';
@@ -121,30 +116,6 @@ class AnalyzerImpl {
   ErrorSeverity analyzeSync({int printMode: 1}) {
     setupForAnalysis();
     return _analyzeSync(printMode);
-  }
-
-  /// Create and return the source factory to be used by the analysis context.
-  SourceFactory createSourceFactory() {
-    List<UriResolver> resolvers = [
-      new CustomUriResolver(options.customUrlMappings),
-      new DartUriResolver(sdk)
-    ];
-    if (options.packageRootPath != null) {
-      JavaFile packageDirectory = new JavaFile(options.packageRootPath);
-      resolvers.add(new PackageUriResolver([packageDirectory]));
-    } else {
-      PubPackageMapProvider pubPackageMapProvider =
-          new PubPackageMapProvider(PhysicalResourceProvider.INSTANCE, sdk);
-      PackageMapInfo packageMapInfo = pubPackageMapProvider.computePackageMap(
-          PhysicalResourceProvider.INSTANCE.getResource('.'));
-      Map<String, List<Folder>> packageMap = packageMapInfo.packageMap;
-      if (packageMap != null) {
-        resolvers.add(new PackageMapUriResolver(
-            PhysicalResourceProvider.INSTANCE, packageMap));
-      }
-    }
-    resolvers.add(new FileUriResolver());
-    return new SourceFactory(resolvers);
   }
 
   /// Fills [errorInfos] using [sources].

@@ -25,6 +25,7 @@ import 'package:analyzer/src/generated/source_io.dart';
 import 'package:analyzer_cli/src/analyzer_impl.dart';
 import 'package:analyzer_cli/src/options.dart';
 import 'package:linter/src/plugin/linter_plugin.dart';
+//import 'package:package_config/packages_file.dart' as pkgfile show parse;
 import 'package:path/path.dart' as path;
 import 'package:plugin/manager.dart';
 import 'package:plugin/plugin.dart';
@@ -135,6 +136,9 @@ class Driver {
     if (options.packageRootPath != _previousOptions.packageRootPath) {
       return false;
     }
+    if (options.packageConfigPath != _previousOptions.packageConfigPath) {
+      return false;
+    }
     if (!_equalMaps(
         options.customUrlMappings, _previousOptions.customUrlMappings)) {
       return false;
@@ -219,16 +223,24 @@ class Driver {
   }
 
   /// Decide on the appropriate method for resolving URIs based on the given
-  /// [packageRootPath] and [customUrlMappings] settings, and return a
+  /// [options] and [customUrlMappings] settings, and return a
   /// [SourceFactory] that has been configured accordingly.
   SourceFactory _chooseUriResolutionPolicy(
-      String packageRootPath, Map<String, String> customUrlMappings) {
+      CommandLineOptions options, Map<String, String> customUrlMappings) {
     List<UriResolver> resolvers = [
       new CustomUriResolver(customUrlMappings),
       new DartUriResolver(sdk)
     ];
-    if (packageRootPath != null) {
-      JavaFile packageDirectory = new JavaFile(packageRootPath);
+
+    if (options.packageConfigPath != null) {
+      // TODO(pquitslund): plug into new resolver once implemented
+      // https://github.com/dart-lang/sdk/issues/23615
+      // Uri fileUri = new Uri.file(options.packageConfigPath);
+      // File configFile = new File.fromUri(fileUri);
+      // List<int> bytes = configFile.readAsBytesSync();
+      // Map<String, Uri> map = pkgfile.parse(bytes, fileUri);
+    } else if (options.packageRootPath != null) {
+      JavaFile packageDirectory = new JavaFile(options.packageRootPath);
       resolvers.add(new PackageUriResolver([packageDirectory]));
     } else {
       PubPackageMapProvider pubPackageMapProvider =
@@ -273,8 +285,8 @@ class Driver {
     _previousOptions = options;
     // Choose a package resolution policy and a diet parsing policy based on
     // the command-line options.
-    SourceFactory sourceFactory = _chooseUriResolutionPolicy(
-        options.packageRootPath, options.customUrlMappings);
+    SourceFactory sourceFactory =
+        _chooseUriResolutionPolicy(options, options.customUrlMappings);
     AnalyzeFunctionBodiesPredicate dietParsingPolicy =
         _chooseDietParsingPolicy(options);
     // Create a context using these policies.
