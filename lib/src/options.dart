@@ -485,7 +485,12 @@ class OptionsFileParser {
       throw 'Bad options file format (expected map, got ${doc.runtimeType})';
     }
     if (doc is YamlMap) {
-      doc.forEach((k, v) => options[k] = v);
+      doc.forEach((k, v) {
+        if (k is! String) {
+          throw 'Bad options file format (expected String scope key, got ${k.runtimeType})';
+        }
+        options[k] = v;
+      });
     }
     return options;
   }
