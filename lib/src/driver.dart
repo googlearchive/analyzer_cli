@@ -10,6 +10,7 @@ import 'dart:io';
 
 import 'package:analyzer/file_system/file_system.dart' as fileSystem;
 import 'package:analyzer/file_system/physical_file_system.dart';
+import 'package:analyzer/plugin/options.dart';
 import 'package:analyzer/source/package_map_provider.dart';
 import 'package:analyzer/source/package_map_resolver.dart';
 import 'package:analyzer/source/pub_package_map_provider.dart';
@@ -29,6 +30,7 @@ import 'package:package_config/packages_file.dart' as pkgfile show parse;
 import 'package:path/path.dart' as path;
 import 'package:plugin/manager.dart';
 import 'package:plugin/plugin.dart';
+import 'package:yaml/yaml.dart';
 
 /// The maximum number of sources for which AST structures should be kept in the cache.
 const int _maxCacheSize = 512;
@@ -59,15 +61,27 @@ class Driver {
   /// Use the given command-line [args] to start this analysis driver.
   void start(List<String> args) {
     StringUtilities.INTERNER = new MappedInterner();
+
     _processPlugins();
+
+    // Parse commandline options.
     CommandLineOptions options = CommandLineOptions.parse(args);
-    // In batch mode, SDK is specified on the main command line rather than in
-    // the command lines sent to stdin.  So process it before deciding whether
-    // to activate batch mode.
-    if (sdk == null) {
-      sdk = new DirectoryBasedDartSdk(new JavaFile(options.dartSdkPath));
+
+    // Set up env.
+    {
+      // In batch mode, SDK is specified on the main command line rather than in
+      // the command lines sent to stdin.  So process it before deciding whether
+      // to activate batch mode.
+      if (sdk == null) {
+        sdk = new DirectoryBasedDartSdk(new JavaFile(options.dartSdkPath));
+      }
+      _isBatch = options.shouldBatch;
     }
-    _isBatch = options.shouldBatch;
+
+    // Process analysis options file (and notify all interested parties).
+    _processAnalysisOptions(options);
+
+    // Do analysis.
     if (_isBatch) {
       _BatchRunner.runAsBatch(args, (List<String> args) {
         CommandLineOptions options = CommandLineOptions.parse(args);
@@ -324,11 +338,35 @@ class Driver {
     _context = context;
   }
 
+  void _processAnalysisOptions(CommandLineOptions options) {
+
+    // Find file
+    var filePath = options.analysisOptionsFile != null
+        ? options.analysisOptionsFile
+        : analysisOptionsFileName;
+    var file = new File(filePath);
+    if (!file.existsSync()) {
+      return;
+    }
+
+    List<OptionsProcessor> optionsProcessors =
+        AnalysisEngine.instance.optionsPlugin.optionsProcessors;
+
+    // Read file and notify processors
+    try {
+      String contents = file.readAsStringSync();
+      Map<String, YamlNode> options = new OptionsFileParser().parse(contents);
+      optionsProcessors
+          .forEach((OptionsProcessor p) => p.optionsProcessed(options));
+    } catch (e) {
+      optionsProcessors.forEach((OptionsProcessor p) => p.onError(e));
+    }
+  }
+
   void _processPlugins() {
     List<Plugin> plugins = <Plugin>[];
-    // TODO(pquitslund): add once engine plugin imports are fixed
-    //plugins.add(AnalysisEngine.instance.enginePlugin);
     plugins.add(linterPlugin);
+    plugins.addAll(AnalysisEngine.instance.supportedPlugins);
     plugins.addAll(_userDefinedPlugins);
     ExtensionManager manager = new ExtensionManager();
     manager.processPlugins(plugins);

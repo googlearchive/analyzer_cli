@@ -8,6 +8,10 @@ import 'dart:io';
 
 import 'package:args/args.dart';
 import 'package:cli_util/cli_util.dart' show getSdkDir;
+import 'package:yaml/yaml.dart';
+
+/// Analysis options file name.
+const String analysisOptionsFileName = '.analysis.yaml';
 
 const _binaryName = 'dartanalyzer';
 
@@ -19,6 +23,10 @@ void printAndFail(String message, {int exitCode: 15}) {
 
 /// Analyzer commandline configuration options.
 class CommandLineOptions {
+
+  /// The path to an analysis options file
+  final String analysisOptionsFile;
+
   /// The path to the dart SDK
   String dartSdkPath;
 
@@ -85,6 +93,7 @@ class CommandLineOptions {
       Map<String, String> customUrlMappings)
       : dartSdkPath = args['dart-sdk'],
         this.definedVariables = definedVariables,
+        analysisOptionsFile = args['options'],
         disableHints = args['no-hints'],
         displayVersion = args['version'],
         enableNullAwareOperators = args['enable-null-aware-operators'],
@@ -169,6 +178,7 @@ class CommandLineOptions {
       ..addOption('package-root',
           abbr: 'p',
           help: 'Path to a package root directory (deprecated). This option cannot be used with --packages.')
+      ..addOption('options', help: 'Path to an analysis options file.')
       ..addOption('format',
           help: 'Specifies the format in which errors are displayed.')
       ..addFlag('machine',
@@ -309,7 +319,8 @@ class CommandLineOptions {
 /// Commandline argument parser.
 ///
 /// TODO(pquitslund): when the args package supports ignoring unrecognized
-/// options/flags, this class can be replaced with a simple [ArgParser] instance.
+/// options/flags, this class can be replaced with a simple [ArgParser]
+/// instance.
 class CommandLineParser {
   final List<String> _knownFlags;
   final bool _alwaysIgnoreUnrecognized;
@@ -434,5 +445,48 @@ class CommandLineParser {
       }
     }
     return i;
+  }
+}
+
+/// Parses options from a YAML-format options file.
+///
+/// The options file format is intentionally very open-ended, giving clients
+/// utmost flexibility in defining their own options.  The only hardfast
+/// expectation is that options files will contain a mapping from Strings
+/// (identifying 'scopes') to associated options.  For example, the given
+/// content
+///
+///     linter:
+///       rules:
+///         camel_case_types: true
+///     compiler:
+///       resolver:
+///         useMultiPackage: true
+///       packagePaths:
+///         - /foo/bar/pkg
+///         - /bar/baz/pkg
+///
+/// defines two scopes, `linter` and `compiler`.  Parsing would result in a
+/// map, mapping the `linter` and `compiler` scope identifiers to their
+/// respective parsed option node contents. Extracting values is a simple
+/// matter of inspecting the parsed nodes.  For example, testing whether the
+/// compiler's resolver is set to use the `useMultiPackage` option might look
+/// something like this (eliding error-checking):
+///
+///     bool useMultiPackage =
+///         options['compiler']['resolver']['useMultiPackage'];
+class OptionsFileParser {
+  /// Parse the given [yaml] source into a mapping of option scopes to
+  /// associated option content [YamlNode]s.
+  Map<String, YamlNode> parse(String yaml) {
+    var options = <String, YamlNode>{};
+    var doc = loadYaml(yaml);
+    if (doc is! YamlMap) {
+      throw 'Bad options file format (expected map, got ${doc.runtimeType})';
+    }
+    if (doc is YamlMap) {
+      doc.forEach((k, v) => options[k] = v);
+    }
+    return options;
   }
 }

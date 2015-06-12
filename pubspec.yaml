@@ -3,15 +3,16 @@ version: 1.1.0
 description: Command line interface for the Dart Analyzer.
 author: Dart Team <misc@dartlang.org>
 homepage: https://github.com/dart-lang/analyzer_cli
+environment:
+  sdk: '>=1.8.0 <2.0.0'
 dependencies:
-  analyzer: '>=0.24.0 <0.26.0'
+  analyzer: ^0.25.1-alpha.2
   args: ^0.13.0
   cli_util: ^0.0.1
   linter: ^0.1.0
   package_config: ^0.0.3+1
   plugin: ^0.1.0
-environment:
-  sdk: '>=1.8.0 <2.0.0'
+  yaml: ^2.1.2
 dev_dependencies:
   mockito: ^0.8.2
   unittest: ^0.11.0

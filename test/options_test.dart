@@ -11,7 +11,7 @@ import 'package:unittest/unittest.dart';
 main() {
   groupSep = ' | ';
 
-  group('AnalyzerOptions', () {
+  group('CommandLineOptions', () {
     group('parse', () {
       test('defaults', () {
         CommandLineOptions options =
@@ -77,6 +77,12 @@ main() {
         CommandLineOptions options = CommandLineOptions
             .parse(['--dart-sdk', '.', '--no-hints', 'foo.dart']);
         expect(options.disableHints, isTrue);
+      });
+
+      test('options', () {
+        CommandLineOptions options = CommandLineOptions.parse(
+            ['--dart-sdk', '.', '--options', 'options.yaml', 'foo.dart']);
+        expect(options.analysisOptionsFile, equals('options.yaml'));
       });
 
       test('lints', () {
@@ -158,6 +164,49 @@ main() {
             parser.parse(['--optionA=1', '--optionB=2', '--flagA'], {});
         expect(argResults['optionA'], '1');
         expect(argResults['flagA'], isTrue);
+      });
+    });
+  });
+
+  group('OptionsFileParser', () {
+    group('parse', () {
+      test('basic', () {
+        const src = '''
+compiler:
+  resolver:
+    useMultiPackage: true
+    packagePaths:
+      - /foo/bar/pkg
+      - /bar/baz/pkg
+    resources:
+      - /my/src/html/index.html
+    inferFromOverrides: true
+    # ...
+linter:
+  camelCaseTypes: true
+''';
+        var options = new OptionsFileParser().parse(src);
+        expect(options['compiler']['resolver']['useMultiPackage'], isTrue);
+        expect(options['linter']['camelCaseTypes'], isTrue);
+      });
+      test('bad yaml', () {
+        const src = '''
+foo: bar baz: bang
+''';
+        expect(() => new OptionsFileParser().parse(src), throws);
+      });
+      test('bad format (expected map)', () {
+        const src = '''
+foo
+bar
+''';
+        expect(() => new OptionsFileParser().parse(src), throws);
+      });
+      test('bad format (bad scope key)', () {
+        const src = '''
+[foo, bar]: baz
+''';
+        expect(() => new OptionsFileParser().parse(src), throws);
       });
     });
   });
