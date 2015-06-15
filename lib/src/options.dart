@@ -482,12 +482,14 @@ class OptionsFileParser {
     var options = <String, YamlNode>{};
     var doc = loadYaml(yaml);
     if (doc is! YamlMap) {
-      throw 'Bad options file format (expected map, got ${doc.runtimeType})';
+      throw new Exception(
+          'Bad options file format (expected map, got ${doc.runtimeType})');
     }
     if (doc is YamlMap) {
       doc.forEach((k, v) {
         if (k is! String) {
-          throw 'Bad options file format (expected String scope key, got ${k.runtimeType})';
+          throw new Exception(
+              'Bad options file format (expected String scope key, got ${k.runtimeType})');
         }
         options[k] = v;
       });

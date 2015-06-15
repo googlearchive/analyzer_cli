@@ -67,16 +67,8 @@ class Driver {
     // Parse commandline options.
     CommandLineOptions options = CommandLineOptions.parse(args);
 
-    // Set up env.
-    {
-      // In batch mode, SDK is specified on the main command line rather than in
-      // the command lines sent to stdin.  So process it before deciding whether
-      // to activate batch mode.
-      if (sdk == null) {
-        sdk = new DirectoryBasedDartSdk(new JavaFile(options.dartSdkPath));
-      }
-      _isBatch = options.shouldBatch;
-    }
+    // Cache options of interest to inform analysis.
+    _setupEnv(options);
 
     // Process analysis options file (and notify all interested parties).
     _processAnalysisOptions(options);
@@ -358,7 +350,7 @@ class Driver {
       Map<String, YamlNode> options = new OptionsFileParser().parse(contents);
       optionsProcessors
           .forEach((OptionsProcessor p) => p.optionsProcessed(options));
-    } catch (e) {
+    } on Exception catch (e) {
       optionsProcessors.forEach((OptionsProcessor p) => p.onError(e));
     }
   }
@@ -385,6 +377,16 @@ class Driver {
       exitCode = errorSeverity.ordinal;
     }
     return errorSeverity;
+  }
+
+  void _setupEnv(CommandLineOptions options) {
+    // In batch mode, SDK is specified on the main command line rather than in
+    // the command lines sent to stdin.  So process it before deciding whether
+    // to activate batch mode.
+    if (sdk == null) {
+      sdk = new DirectoryBasedDartSdk(new JavaFile(options.dartSdkPath));
+    }
+    _isBatch = options.shouldBatch;
   }
 
   /// Perform a deep comparison of two string maps.
