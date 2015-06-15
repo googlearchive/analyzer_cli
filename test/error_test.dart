@@ -6,7 +6,7 @@ library analyzer_cli.test.error;
 
 import 'package:unittest/unittest.dart';
 
-import 'utils.dart';
+import 'test_utils.dart';
 
 void main() {
   groupSep = ' | ';
