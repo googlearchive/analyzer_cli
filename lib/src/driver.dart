@@ -282,12 +282,12 @@ class Driver {
     if (source != null) {
       return source;
     }
-    source = new FileBasedSource.con2(sourceFile.toURI(), sourceFile);
+    source = new FileBasedSource(sourceFile, sourceFile.toURI());
     Uri uri = _context.sourceFactory.restoreUri(source);
     if (uri == null) {
       return source;
     }
-    return new FileBasedSource.con2(uri, sourceFile);
+    return new FileBasedSource(sourceFile, uri);
   }
 
   /// Create an analysis context that is prepared to analyze sources according
