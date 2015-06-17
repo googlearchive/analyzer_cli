@@ -114,8 +114,10 @@ class CommandLineOptions {
         this.customUrlMappings = customUrlMappings;
 
   /// Parse [args] into [CommandLineOptions] describing the specified
-  /// analyzer options. In case of a format error, prints error and exists.
-  static CommandLineOptions parse(List<String> args) {
+  /// analyzer options. In case of a format error, calls [printAndFail], which
+  /// by default prints an error message and exits.
+  static CommandLineOptions parse(List<String> args,
+      [printAndFail = printAndFail]) {
     CommandLineOptions options = _parse(args);
     // check SDK
     {
@@ -131,11 +133,11 @@ class CommandLineOptions {
 
       // check that SDK is specified
       if (sdkPath == null) {
-        printAndFail('Usage: $_binaryName: no Dart SDK found.');
+        printAndFail('No Dart SDK found.');
       }
       // check that SDK is existing directory
       if (!(new Directory(sdkPath)).existsSync()) {
-        printAndFail('Usage: $_binaryName: invalid Dart SDK path: $sdkPath');
+        printAndFail('Invalid Dart SDK path: $sdkPath');
       }
     }
 
