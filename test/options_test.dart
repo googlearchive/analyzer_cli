@@ -185,12 +185,6 @@ main() {
             ['--dart-sdk', '&&&&&', 'foo.dart'], (msg) => failureMessage = msg);
         expect(failureMessage, equals('Invalid Dart SDK path: &&&&&'));
       });
-
-      test("missing library", () {
-        var failureMessage;
-        CommandLineOptions.parse([''], (msg) => failureMessage = msg);
-        expect(failureMessage, startsWith("Invalid Dart SDK path: &&&&&"));
-      });
     });
   });
 
