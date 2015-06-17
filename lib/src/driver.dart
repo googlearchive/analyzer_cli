@@ -32,6 +32,16 @@ import 'package:plugin/manager.dart';
 import 'package:plugin/plugin.dart';
 import 'package:yaml/yaml.dart';
 
+/// Shared IO sink for standard error reporting.
+///
+/// *Visible for testing.*
+IOSink errorSink = stderr;
+
+/// Shared IO sink for standard out reporting.
+///
+/// *Visible for testing.*
+IOSink outSink = stdout;
+
 /// The maximum number of sources for which AST structures should be kept in the cache.
 const int _maxCacheSize = 512;
 
@@ -87,7 +97,7 @@ class Driver {
   /// Perform analysis according to the given [options].
   ErrorSeverity _analyzeAll(CommandLineOptions options) {
     if (!options.machineFormat) {
-      stdout.writeln("Analyzing ${options.sourceFiles}...");
+      outSink.writeln("Analyzing ${options.sourceFiles}...");
     }
 
     // Create a context, or re-use the previous one.
@@ -313,7 +323,7 @@ class Driver {
         declaredVariables.define(variableName, value);
       });
     }
-    // Uncomment the following to have errors reported on stdout and stderr
+
     AnalysisEngine.instance.logger = new StdLogger(options.log);
 
     // set options for context
@@ -415,7 +425,7 @@ class _BatchRunner {
   /// returning pass/fail status through stdout. This feature is intended for
   /// use in unit testing.
   static void runAsBatch(List<String> sharedArgs, _BatchRunnerHandler handler) {
-    stdout.writeln('>>> BATCH START');
+    outSink.writeln('>>> BATCH START');
     Stopwatch stopwatch = new Stopwatch();
     stopwatch.start();
     int testsFailed = 0;
@@ -428,7 +438,7 @@ class _BatchRunner {
       // may be finish
       if (line.isEmpty) {
         var time = stopwatch.elapsedMilliseconds;
-        stdout.writeln(
+        outSink.writeln(
             '>>> BATCH END (${totalTests - testsFailed}/$totalTests) ${time}ms');
         exitCode = batchResult.ordinal;
       }
@@ -452,15 +462,15 @@ class _BatchRunner {
         }
         batchResult = batchResult.max(result);
         // Write stderr end token and flush.
-        stderr.writeln('>>> EOF STDERR');
+        errorSink.writeln('>>> EOF STDERR');
         String resultPassString = resultPass ? 'PASS' : 'FAIL';
-        stdout.writeln(
+        outSink.writeln(
             '>>> TEST $resultPassString ${stopwatch.elapsedMilliseconds}ms');
       } catch (e, stackTrace) {
-        stderr.writeln(e);
-        stderr.writeln(stackTrace);
-        stderr.writeln('>>> EOF STDERR');
-        stdout.writeln('>>> TEST CRASH');
+        errorSink.writeln(e);
+        errorSink.writeln(stackTrace);
+        errorSink.writeln('>>> EOF STDERR');
+        outSink.writeln('>>> TEST CRASH');
       }
     });
   }

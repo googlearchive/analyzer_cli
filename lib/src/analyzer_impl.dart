@@ -16,6 +16,7 @@ import 'package:analyzer/src/generated/sdk_io.dart';
 import 'package:analyzer/src/generated/source.dart';
 import 'package:analyzer/src/generated/source_io.dart';
 import 'package:analyzer/src/generated/utilities_general.dart';
+import 'package:analyzer_cli/src/driver.dart';
 import 'package:analyzer_cli/src/error_formatter.dart';
 import 'package:analyzer_cli/src/lint.dart';
 import 'package:analyzer_cli/src/options.dart';
@@ -210,12 +211,12 @@ class AnalyzerImpl {
     for (PerformanceTag tag in PerformanceTag.all) {
       if (tag != PerformanceTag.UNKNOWN) {
         int tagTime = tag.elapsedMs;
-        stdout.writeln('${tag.label}-cold:$tagTime');
+        outSink.writeln('${tag.label}-cold:$tagTime');
         otherTime -= tagTime;
       }
     }
-    stdout.writeln('other-cold:$otherTime');
-    stdout.writeln("total-cold:$totalTime");
+    outSink.writeln('other-cold:$otherTime');
+    outSink.writeln("total-cold:$totalTime");
   }
 
   _printErrorsAndPerf() {
@@ -225,7 +226,7 @@ class AnalyzerImpl {
     // is because when the argument flags are constructed in BatchRunner and
     // passed in from batch mode which removes the batch flag to prevent the
     // "cannot have the batch flag and source file" error message.
-    IOSink sink = options.machineFormat ? stderr : stdout;
+    IOSink sink = options.machineFormat ? errorSink : outSink;
 
     // print errors
     ErrorFormatter formatter =
@@ -262,8 +263,8 @@ class AnalyzerImpl {
   }
 }
 
-/// This [Logger] prints out information comments to [stdout] and error messages
-/// to [stderr].
+/// This [Logger] prints out information comments to [outSink] and error messages
+/// to [errorSink].
 class StdLogger extends Logger {
   final bool log;
 
@@ -271,23 +272,23 @@ class StdLogger extends Logger {
 
   @override
   void logError(String message, [CaughtException exception]) {
-    stderr.writeln(message);
+    errorSink.writeln(message);
     if (exception != null) {
-      stderr.writeln(exception);
+      errorSink.writeln(exception);
     }
   }
 
   @override
   void logError2(String message, Object exception) {
-    stderr.writeln(message);
+    errorSink.writeln(message);
   }
 
   @override
   void logInformation(String message, [CaughtException exception]) {
     if (log) {
-      stdout.writeln(message);
+      outSink.writeln(message);
       if (exception != null) {
-        stderr.writeln(exception);
+        errorSink.writeln(exception);
       }
     }
   }
@@ -295,7 +296,7 @@ class StdLogger extends Logger {
   @override
   void logInformation2(String message, Object exception) {
     if (log) {
-      stdout.writeln(message);
+      outSink.writeln(message);
     }
   }
 }

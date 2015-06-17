@@ -165,6 +165,32 @@ main() {
         expect(argResults['optionA'], '1');
         expect(argResults['flagA'], isTrue);
       });
+
+      test("can't specify package and package-root", () {
+        var failureMessage;
+        CommandLineOptions.parse([
+          '--package-root',
+          '.',
+          '--packages',
+          '.',
+          'foo.dart'
+        ], (msg) => failureMessage = msg);
+        expect(failureMessage,
+            equals("Cannot specify both '--package-root' and '--packages."));
+      });
+
+      test("bad SDK dir", () {
+        var failureMessage;
+        CommandLineOptions.parse(
+            ['--dart-sdk', '&&&&&', 'foo.dart'], (msg) => failureMessage = msg);
+        expect(failureMessage, equals('Invalid Dart SDK path: &&&&&'));
+      });
+
+      test("missing library", () {
+        var failureMessage;
+        CommandLineOptions.parse([''], (msg) => failureMessage = msg);
+        expect(failureMessage, startsWith("Invalid Dart SDK path: &&&&&"));
+      });
     });
   });
 
