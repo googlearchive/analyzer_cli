@@ -25,6 +25,7 @@ import 'package:analyzer/src/generated/source.dart';
 import 'package:analyzer/src/generated/source_io.dart';
 import 'package:analyzer_cli/src/analyzer_impl.dart';
 import 'package:analyzer_cli/src/options.dart';
+import 'package:dev_compiler/strong_mode.dart';
 import 'package:linter/src/plugin/linter_plugin.dart';
 import 'package:package_config/packages_file.dart' as pkgfile show parse;
 import 'package:path/path.dart' as path;
@@ -35,12 +36,12 @@ import 'package:yaml/yaml.dart';
 /// Shared IO sink for standard error reporting.
 ///
 /// *Visible for testing.*
-IOSink errorSink = stderr;
+StringSink errorSink = stderr;
 
 /// Shared IO sink for standard out reporting.
 ///
 /// *Visible for testing.*
-IOSink outSink = stdout;
+StringSink outSink = stdout;
 
 /// The maximum number of sources for which AST structures should be kept in the cache.
 const int _maxCacheSize = 512;
@@ -58,6 +59,10 @@ class Driver {
   /// The context that was most recently created by a call to [_analyzeAll], or
   /// `null` if [_analyzeAll] hasn't been called yet.
   AnalysisContext _context;
+
+  /// The strong mode checker corresponding to [_context], or `null` if strong
+  /// mode is not enabled or a context is not available yet.
+  StrongChecker _strongChecker;
 
   /// If [_context] is not `null`, the [CommandLineOptions] that guided its
   /// creation.
@@ -186,6 +191,9 @@ class Driver {
     if (options.lints != _previousOptions.lints) {
       return false;
     }
+    if (options.strongMode != _previousOptions.strongMode) {
+      return false;
+    }
     return true;
   }
 
@@ -254,7 +262,7 @@ class Driver {
       try {
         File configFile = new File.fromUri(fileUri);
         List<int> bytes = configFile.readAsBytesSync();
-        Map<String, Uri> map = pkgfile.parse(bytes, fileUri);
+        /*Map<String, Uri> map = */pkgfile.parse(bytes, fileUri);
         // TODO(pquitslund): plug into new resolver once implemented
         // https://github.com/dart-lang/sdk/issues/23615
       } catch (e) {
@@ -316,6 +324,14 @@ class Driver {
     // Create a context using these policies.
     AnalysisContext context = AnalysisEngine.instance.createAnalysisContext();
     context.sourceFactory = sourceFactory;
+
+    if (options.strongMode) {
+      // TODO(jmesserly): support options file
+      var strongOptions = new StrongModeOptions(hints: options.strongHints);
+      // TODO(jmesserly): make StrongChecker an analysis plugin
+      _strongChecker = new StrongChecker(context, strongOptions);
+    }
+
     Map<String, String> definedVariables = options.definedVariables;
     if (!definedVariables.isEmpty) {
       DeclaredVariables declaredVariables = context.declaredVariables;
@@ -378,7 +394,7 @@ class Driver {
   ErrorSeverity _runAnalyzer(Source source, CommandLineOptions options) {
     int startTime = currentTimeMillis();
     AnalyzerImpl analyzer =
-        new AnalyzerImpl(_context, source, options, startTime);
+        new AnalyzerImpl(_context, _strongChecker, source, options, startTime);
     var errorSeverity = analyzer.analyzeSync();
     if (errorSeverity == ErrorSeverity.ERROR) {
       exitCode = errorSeverity.ordinal;

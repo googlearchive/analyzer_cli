@@ -20,6 +20,7 @@ import 'package:analyzer_cli/src/driver.dart';
 import 'package:analyzer_cli/src/error_formatter.dart';
 import 'package:analyzer_cli/src/lint.dart';
 import 'package:analyzer_cli/src/options.dart';
+import 'package:dev_compiler/strong_mode.dart' show StrongChecker;
 
 DirectoryBasedDartSdk sdk;
 
@@ -34,6 +35,7 @@ class AnalyzerImpl {
   final int startTime;
 
   final AnalysisContext context;
+  final StrongChecker strongChecker;
   final Source librarySource;
   /// All [Source]s references by the analyzed library.
   final Set<Source> sources = new Set<Source>();
@@ -52,7 +54,8 @@ class AnalyzerImpl {
   /// specified the "--package-warnings" option.
   String _selfPackageName;
 
-  AnalyzerImpl(this.context, this.librarySource, this.options, this.startTime);
+  AnalyzerImpl(this.context, this.strongChecker, this.librarySource,
+      this.options, this.startTime);
 
   /// Returns the maximal [ErrorSeverity] of the recorded errors.
   ErrorSeverity get maxErrorSeverity {
@@ -123,8 +126,13 @@ class AnalyzerImpl {
   void prepareErrors() {
     for (Source source in sources) {
       context.computeErrors(source);
+
       var sourceErrors = context.getErrors(source);
       errorInfos.add(sourceErrors);
+
+      if (options.strongMode) {
+        errorInfos.add(strongChecker.computeErrors(source));
+      }
     }
   }
 
@@ -226,7 +234,7 @@ class AnalyzerImpl {
     // is because when the argument flags are constructed in BatchRunner and
     // passed in from batch mode which removes the batch flag to prevent the
     // "cannot have the batch flag and source file" error message.
-    IOSink sink = options.machineFormat ? errorSink : outSink;
+    StringSink sink = options.machineFormat ? errorSink : outSink;
 
     // print errors
     ErrorFormatter formatter =

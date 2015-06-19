@@ -34,6 +34,7 @@ main() {
         expect(options.warningsAreFatal, isFalse);
         expect(options.customUrlMappings, isNotNull);
         expect(options.customUrlMappings.isEmpty, isTrue);
+        expect(options.strongMode, isFalse);
       });
 
       test('batch', () {
@@ -164,6 +165,13 @@ main() {
             parser.parse(['--optionA=1', '--optionB=2', '--flagA'], {});
         expect(argResults['optionA'], '1');
         expect(argResults['flagA'], isTrue);
+      });
+
+      test('strong mode', () {
+        CommandLineOptions options = CommandLineOptions
+            .parse(['--strong', '--strong-hints', 'foo.dart']);
+        expect(options.strongMode, isTrue);
+        expect(options.strongHints, isTrue);
       });
 
       test("can't specify package and package-root", () {
