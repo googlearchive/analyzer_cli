@@ -87,6 +87,12 @@ class CommandLineOptions {
   /// source is located.
   final Map<String, String> customUrlMappings;
 
+  /// Whether to use package:dev_compiler for strong static checking.
+  final bool strongMode;
+
+  /// Whether to emit hints from [strongMode] analysis.
+  final bool strongHints;
+
   /// Initialize options from the given parsed [args].
   CommandLineOptions._fromArgs(ArgResults args,
       Map<String, String> definedVariables,
@@ -111,7 +117,9 @@ class CommandLineOptions {
         showSdkWarnings = args['show-sdk-warnings'] || args['warnings'],
         sourceFiles = args.rest,
         warningsAreFatal = args['fatal-warnings'],
-        this.customUrlMappings = customUrlMappings;
+        this.customUrlMappings = customUrlMappings,
+        strongMode = args['strong'],
+        strongHints = args['strong-hints'];
 
   /// Parse [args] into [CommandLineOptions] describing the specified
   /// analyzer options. In case of a format error, calls [printAndFail], which
@@ -263,7 +271,13 @@ class CommandLineOptions {
           help: 'Check types in constant evaluation.',
           defaultsTo: false,
           negatable: false,
+          hide: true)
+      // TODO(jmesserly): link to a spec+explainer for these checks.
+      ..addFlag('strong', help: 'Enable strong static checks.', hide: true)
+      ..addFlag('strong-hints',
+          help: 'Enable hints about dynamic operations.',
           hide: true);
+
 
     try {
       // TODO(scheglov) https://code.google.com/p/dart/issues/detail?id=11061

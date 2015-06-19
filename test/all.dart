@@ -8,6 +8,7 @@ import 'driver_test.dart' as driver;
 import 'error_test.dart' as error;
 import 'options_test.dart' as options;
 import 'reporter_test.dart' as reporter;
+import 'strong_mode_test.dart' as strong_mode;
 
 main() {
   // Tidy up output.
@@ -18,4 +19,5 @@ main() {
   error.main();
   options.main();
   reporter.main();
+  strong_mode.main();
 }
