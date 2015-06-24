@@ -127,9 +127,9 @@ class CommandLineOptions {
   static CommandLineOptions parse(List<String> args,
       [printAndFail = printAndFail]) {
     CommandLineOptions options = _parse(args);
-    // check SDK
+    // Check SDK.
     {
-      // infer if unspecified
+      // Infer if unspecified.
       if (options.dartSdkPath == null) {
         Directory sdkDir = getSdkDir(args);
         if (sdkDir != null) {
@@ -139,17 +139,17 @@ class CommandLineOptions {
 
       var sdkPath = options.dartSdkPath;
 
-      // check that SDK is specified
+      // Check that SDK is specified.
       if (sdkPath == null) {
         printAndFail('No Dart SDK found.');
       }
-      // check that SDK is existing directory
+      // Check that SDK is existing directory.
       if (!(new Directory(sdkPath)).existsSync()) {
         printAndFail('Invalid Dart SDK path: $sdkPath');
       }
     }
 
-    // check package config
+    // Check package config.
     {
       if (options.packageRootPath != null &&
           options.packageConfigPath != null) {
@@ -285,12 +285,12 @@ class CommandLineOptions {
           args.map((String arg) => arg == '-batch' ? '--batch' : arg).toList();
       Map<String, String> definedVariables = <String, String>{};
       var results = parser.parse(args, definedVariables);
-      // help requests
+      // Help requests.
       if (results['help']) {
         _showUsage(parser);
         exit(0);
       }
-      // batch mode and input files
+      // Batch mode and input files.
       if (results['batch']) {
         if (results.rest.isNotEmpty) {
           print('No source files expected in the batch mode.');
@@ -342,7 +342,7 @@ class CommandLineParser {
   final bool _alwaysIgnoreUnrecognized;
   final ArgParser _parser;
 
-  /// Creates a new command line parser
+  /// Creates a new command line parser.
   CommandLineParser({bool alwaysIgnoreUnrecognized: false})
       : _knownFlags = <String>[],
         _alwaysIgnoreUnrecognized = alwaysIgnoreUnrecognized,
@@ -415,7 +415,7 @@ class CommandLineParser {
   List<String> _filterUnknowns(List<String> args) {
 
     // Only filter args if the ignore flag is specified, or if
-    // _alwaysIgnoreUnrecognized was set to true
+    // _alwaysIgnoreUnrecognized was set to true.
     if (_alwaysIgnoreUnrecognized ||
         args.contains('--ignore-unrecognized-flags')) {
 
@@ -435,9 +435,8 @@ class CommandLineParser {
           if (equalsOffset != -1) {
             option = option.substring(0, equalsOffset);
           }
-          // check the option
+          // Check the option
           if (!_knownFlags.contains(option)) {
-            //print('remove: $arg');
             //"eat" params by advancing to the next flag/option
             i = _getNextFlagIndex(args, i);
           } else {
