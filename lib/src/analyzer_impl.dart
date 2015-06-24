@@ -86,7 +86,7 @@ class AnalyzerImpl {
     if (library == null || !libraries.add(library)) {
       return;
     }
-    // may be skip library
+    // Maybe skip library.
     {
       UriKind uriKind = library.source.uriKind;
       // Optionally skip package: libraries.
@@ -98,12 +98,12 @@ class AnalyzerImpl {
         return;
       }
     }
-    // add compilation units
+    // Add compilation units.
     addCompilationUnitSource(library.definingCompilationUnit, libraries, units);
     for (CompilationUnitElement child in library.parts) {
       addCompilationUnitSource(child, libraries, units);
     }
-    // add referenced libraries
+    // Add referenced libraries.
     for (LibraryElement child in library.importedLibraries) {
       addLibrarySources(child, libraries, units);
     }
@@ -147,7 +147,7 @@ class AnalyzerImpl {
   void setupForAnalysis() {
     sources.clear();
     errorInfos.clear();
-    // register lints
+    // Register lints.
     if (options.lints) {
       registerLints();
     }
@@ -159,26 +159,26 @@ class AnalyzerImpl {
 
   /// The sync version of analysis.
   ErrorSeverity _analyzeSync(int printMode) {
-    // don't try to analyze parts
+    // Don't try to analyze parts.
     if (context.computeKindOf(librarySource) == SourceKind.PART) {
       print("Only libraries can be analyzed.");
       print("${librarySource.fullName} is a part and can not be analyzed.");
       return ErrorSeverity.ERROR;
     }
-    // resolve library
+    // Resolve library.
     var libraryElement = context.computeLibraryElement(librarySource);
-    // prepare source and errors
+    // Prepare source and errors.
     prepareSources(libraryElement);
     prepareErrors();
 
-    // print errors and performance numbers
+    // Print errors and performance numbers.
     if (printMode == 1) {
       _printErrorsAndPerf();
     } else if (printMode == 2) {
       _printColdPerf();
     }
 
-    // compute max severity and set exitCode
+    // Compute max severity and set exitCode.
     ErrorSeverity status = maxErrorSeverity;
     if (status == ErrorSeverity.WARNING && options.warningsAreFatal) {
       status = ErrorSeverity.ERROR;
@@ -213,7 +213,7 @@ class AnalyzerImpl {
   }
 
   _printColdPerf() {
-    // print cold VM performance numbers
+    // Print cold VM performance numbers.
     int totalTime = currentTimeMillis() - startTime;
     int otherTime = totalTime;
     for (PerformanceTag tag in PerformanceTag.all) {
@@ -236,7 +236,7 @@ class AnalyzerImpl {
     // "cannot have the batch flag and source file" error message.
     StringSink sink = options.machineFormat ? errorSink : outSink;
 
-    // print errors
+    // Print errors.
     ErrorFormatter formatter =
         new ErrorFormatter(sink, options, _isDesiredError);
     formatter.formatErrors(errorInfos);
@@ -254,10 +254,11 @@ class AnalyzerImpl {
     return error.errorCode.errorSeverity;
   }
 
+  /// Return the corresponding package directory or `null` if none is found.
   static JavaFile getPackageDirectoryFor(JavaFile sourceFile) {
-    // we are going to ask parent file, so get absolute path
+    // We are going to ask parent file, so get absolute path.
     sourceFile = sourceFile.getAbsoluteFile();
-    // look in the containing directories
+    // Look in the containing directories.
     JavaFile dir = sourceFile.getParentFile();
     while (dir != null) {
       JavaFile packagesDir = new JavaFile.relative(dir, "packages");
@@ -266,7 +267,7 @@ class AnalyzerImpl {
       }
       dir = dir.getParentFile();
     }
-    // not found
+    // Not found.
     return null;
   }
 }

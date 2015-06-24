@@ -76,9 +76,9 @@ class ErrorFormatter {
         }
       }
     }
-    // sort errors
+    // Sort errors.
     errors.sort((AnalysisError error1, AnalysisError error2) {
-      // severity
+      // Severity.
       ErrorSeverity severity1 =
           AnalyzerImpl.computeSeverity(error1, options.enableTypeChecks);
       ErrorSeverity severity2 =
@@ -87,16 +87,16 @@ class ErrorFormatter {
       if (compare != 0) {
         return compare;
       }
-      // path
+      // Path.
       compare = Comparable.compare(error1.source.fullName.toLowerCase(),
           error2.source.fullName.toLowerCase());
       if (compare != 0) {
         return compare;
       }
-      // offset
+      // Offset.
       return error1.offset - error2.offset;
     });
-    // format errors
+    // Format errors.
     int errorCount = 0;
     int warnCount = 0;
     int hintCount = 0;
@@ -119,7 +119,7 @@ class ErrorFormatter {
       }
       formatError(errorToLine, error);
     }
-    // print statistics
+    // Print statistics.
     if (!options.machineFormat) {
       var hasErrors = errorCount != 0;
       var hasWarns = warnCount != 0;

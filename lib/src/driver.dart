@@ -116,18 +116,18 @@ class Driver {
     ChangeSet changeSet = new ChangeSet();
     for (String sourcePath in options.sourceFiles) {
       sourcePath = sourcePath.trim();
-      // check that file exists
+      // Check that file exists.
       if (!new File(sourcePath).existsSync()) {
         print('File not found: $sourcePath');
         exitCode = ErrorSeverity.ERROR.ordinal;
-        // fail fast; don't analyze more files
+        //Fail fast; don't analyze more files
         return ErrorSeverity.ERROR;
       }
-      // check that file is Dart file
+      // Check that file is Dart file.
       if (!AnalysisEngine.isDartFileName(sourcePath)) {
         print('$sourcePath is not a Dart file');
         exitCode = ErrorSeverity.ERROR.ordinal;
-        // fail fast; don't analyze more files
+        // Fail fast; don't analyze more files.
         return ErrorSeverity.ERROR;
       }
       Source source = _computeLibrarySource(sourcePath);
@@ -342,7 +342,7 @@ class Driver {
 
     AnalysisEngine.instance.logger = new StdLogger(options.log);
 
-    // set options for context
+    // Set context options.
     AnalysisOptionsImpl contextOptions = new AnalysisOptionsImpl();
     contextOptions.cacheSize = _maxCacheSize;
     contextOptions.hint = !options.disableHints;
@@ -358,7 +358,7 @@ class Driver {
 
   void _processAnalysisOptions(CommandLineOptions options) {
 
-    // Find file
+    // Find file.
     var filePath = options.analysisOptionsFile != null
         ? options.analysisOptionsFile
         : analysisOptionsFileName;
@@ -370,7 +370,7 @@ class Driver {
     List<OptionsProcessor> optionsProcessors =
         AnalysisEngine.instance.optionsPlugin.optionsProcessors;
 
-    // Read file and notify processors
+    // Read file and notify processors.
     try {
       String contents = file.readAsStringSync();
       Map<String, YamlNode> options = new OptionsFileParser().parse(contents);
@@ -447,18 +447,18 @@ class _BatchRunner {
     int testsFailed = 0;
     int totalTests = 0;
     ErrorSeverity batchResult = ErrorSeverity.NONE;
-    // read line from stdin
+    // Read line from stdin.
     Stream cmdLine =
         stdin.transform(UTF8.decoder).transform(new LineSplitter());
     cmdLine.listen((String line) {
-      // may be finish
+      // Maybe finish.
       if (line.isEmpty) {
         var time = stopwatch.elapsedMilliseconds;
         outSink.writeln(
             '>>> BATCH END (${totalTests - testsFailed}/$totalTests) ${time}ms');
         exitCode = batchResult.ordinal;
       }
-      // prepare aruments
+      // Prepare aruments.
       var args;
       {
         var lineArgs = line.split(new RegExp('\\s+'));
@@ -468,7 +468,7 @@ class _BatchRunner {
         args.remove('-b');
         args.remove('--batch');
       }
-      // analyze single set of arguments
+      // Analyze single set of arguments.
       try {
         totalTests++;
         ErrorSeverity result = handler(args);
