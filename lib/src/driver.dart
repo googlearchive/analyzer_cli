@@ -273,6 +273,12 @@ class Driver {
       printAndFail(
           'Package config files are not supported yet. For status see: https://github.com/dart-lang/sdk/issues/23373');
     } else if (options.packageRootPath != null) {
+      Map<String, List<fileSystem.Folder>> packageMap =
+          _PackageRootPackageMapBuilder.buildPackageMap(
+              options.packageRootPath);
+      if (packageMap != null) {
+        resolvers.add(new SdkExtUriResolver(packageMap));
+      }
       JavaFile packageDirectory = new JavaFile(options.packageRootPath);
       resolvers.add(new PackageUriResolver([packageDirectory]));
     } else {
@@ -433,6 +439,28 @@ class Driver {
   /// Convert [sourcePath] into an absolute path.
   static String _normalizeSourcePath(String sourcePath) {
     return path.normalize(new File(sourcePath).absolute.path);
+  }
+}
+
+/// [SdkExtUriResolver] needs a Map from package name to folder. In the case
+/// that the analyzer is invoked with a --package-root option, we need to
+/// manually create this mapping. Given [packageRootPath],
+/// [_PackageRootPackageMapBuilder] creates a simple mapping from package name
+/// to full path on disk (resolving any symbolic links).
+class _PackageRootPackageMapBuilder {
+  static Map<String, List<fileSystem.Folder>> buildPackageMap(
+      String packageRootPath) {
+    var packageRoot = new Directory(packageRootPath);
+    var packages = packageRoot.listSync(followLinks: false);
+    var result = new Map<String, List<fileSystem.Folder>>();
+    for (var package in packages) {
+      var packageName = path.basename(package.path);
+      var realPath = package.resolveSymbolicLinksSync();
+      result[packageName] = [
+        PhysicalResourceProvider.INSTANCE.getFolder(realPath)
+      ];
+    }
+    return result;
   }
 }
 
