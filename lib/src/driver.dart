@@ -265,9 +265,9 @@ class Driver {
       String packageConfigPath = options.packageConfigPath;
       Uri fileUri = new Uri.file(packageConfigPath);
       try {
-        File configFile = new File.fromUri(fileUri);
+        File configFile = new File.fromUri(fileUri).absolute;
         List<int> bytes = configFile.readAsBytesSync();
-        Map<String, Uri> map = pkgfile.parse(bytes, fileUri);
+        Map<String, Uri> map = pkgfile.parse(bytes, configFile.uri);
         packages = new MapPackages(map);
       } catch (e) {
         printAndFail(
