@@ -11,6 +11,7 @@ import 'dart:io';
 import 'package:analyzer/file_system/file_system.dart' as fileSystem;
 import 'package:analyzer/file_system/physical_file_system.dart';
 import 'package:analyzer/plugin/options.dart';
+import 'package:analyzer/source/analysis_options_provider.dart';
 import 'package:analyzer/source/package_map_provider.dart';
 import 'package:analyzer/source/package_map_resolver.dart';
 import 'package:analyzer/source/pub_package_map_provider.dart';
@@ -283,7 +284,7 @@ class Driver {
       JavaFile packageDirectory = new JavaFile(options.packageRootPath);
       resolvers.add(new PackageUriResolver([packageDirectory]));
     } else {
-      
+
       //TODO(pquitslund): add .packages config discovery
 
       PubPackageMapProvider pubPackageMapProvider =
@@ -369,23 +370,18 @@ class Driver {
   }
 
   void _processAnalysisOptions(CommandLineOptions options) {
-
-    // Find file.
+    // Determine options file path.
     var filePath = options.analysisOptionsFile != null
         ? options.analysisOptionsFile
-        : analysisOptionsFileName;
-    var file = new File(filePath);
-    if (!file.existsSync()) {
-      return;
-    }
-
+        : AnalysisOptionsProvider.ANALYSIS_OPTIONS_NAME;
     List<OptionsProcessor> optionsProcessors =
         AnalysisEngine.instance.optionsPlugin.optionsProcessors;
-
-    // Read file and notify processors.
     try {
-      String contents = file.readAsStringSync();
-      Map<String, YamlNode> options = new OptionsFileParser().parse(contents);
+      var file = PhysicalResourceProvider.INSTANCE.getFile(filePath);
+      AnalysisOptionsProvider analysisOptionsProvider =
+          new AnalysisOptionsProvider();
+      Map<String, YamlNode> options =
+          analysisOptionsProvider.getOptionsFromFile(file);
       optionsProcessors
           .forEach((OptionsProcessor p) => p.optionsProcessed(options));
     } on Exception catch (e) {

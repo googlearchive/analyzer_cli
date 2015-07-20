@@ -195,47 +195,4 @@ main() {
       });
     });
   });
-
-  group('OptionsFileParser', () {
-    group('parse', () {
-      test('basic', () {
-        const src = '''
-compiler:
-  resolver:
-    useMultiPackage: true
-    packagePaths:
-      - /foo/bar/pkg
-      - /bar/baz/pkg
-    resources:
-      - /my/src/html/index.html
-    inferFromOverrides: true
-    # ...
-linter:
-  camelCaseTypes: true
-''';
-        var options = new OptionsFileParser().parse(src);
-        expect(options['compiler']['resolver']['useMultiPackage'], isTrue);
-        expect(options['linter']['camelCaseTypes'], isTrue);
-      });
-      test('bad yaml', () {
-        const src = '''
-foo: bar baz: bang
-''';
-        expect(() => new OptionsFileParser().parse(src), throws);
-      });
-      test('bad format (expected map)', () {
-        const src = '''
-foo
-bar
-''';
-        expect(() => new OptionsFileParser().parse(src), throws);
-      });
-      test('bad format (bad scope key)', () {
-        const src = '''
-[foo, bar]: baz
-''';
-        expect(() => new OptionsFileParser().parse(src), throws);
-      });
-    });
-  });
 }
