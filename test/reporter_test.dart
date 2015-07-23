@@ -7,17 +7,11 @@ library analyzer_cli.test.formatter;
 import 'package:analyzer/analyzer.dart';
 import 'package:analyzer_cli/src/error_formatter.dart';
 import 'package:mockito/mockito.dart';
-import 'package:unittest/unittest.dart' hide ErrorFormatter;
+import 'package:test/test.dart' hide ErrorFormatter;
 
 import 'mocks.dart';
 
 main() {
-  groupSep = ' | ';
-
-  defineTests();
-}
-
-defineTests() {
   group('reporter', () {
     var out = new StringBuffer();
 

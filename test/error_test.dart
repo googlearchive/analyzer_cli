@@ -4,13 +4,11 @@
 
 library analyzer_cli.test.error;
 
-import 'package:unittest/unittest.dart';
+import 'package:test/test.dart';
 
 import 'utils.dart';
 
 void main() {
-  groupSep = ' | ';
-
   group('error', () {
     test("a valid Dart file doesn't throw any errors", () {
       expect(errorsForFile('void main() => print("Hello, world!");'), isNull);

@@ -7,12 +7,10 @@ library analyzer_cli.test.driver;
 import 'package:analyzer/plugin/options.dart';
 import 'package:analyzer_cli/src/driver.dart';
 import 'package:plugin/plugin.dart';
-import 'package:unittest/unittest.dart';
+import 'package:test/test.dart';
 import 'package:yaml/src/yaml_node.dart';
 
 main() {
-  groupSep = ' | ';
-
   group('Driver', () {
     group('options', () {
       test('processing', () {

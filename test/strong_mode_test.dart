@@ -8,7 +8,7 @@ import 'dart:io';
 import 'dart:mirrors';
 import 'package:analyzer_cli/src/driver.dart' show Driver, errorSink, outSink;
 import 'package:path/path.dart' as path;
-import 'package:unittest/unittest.dart';
+import 'package:test/test.dart';
 
 /// End-to-end test for --strong checking.
 ///
@@ -18,8 +18,6 @@ import 'package:unittest/unittest.dart';
 /// Generally we don't want a lot of cases here as it requires spinning up a
 /// full analysis context.
 void main() {
-  groupSep = ' | ';
-
   group('--strong', () {
     StringSink savedOutSink, savedErrorSink;
     int savedExitCode;
