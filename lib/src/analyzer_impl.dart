@@ -275,9 +275,7 @@ class AnalyzerImpl {
 /// This [Logger] prints out information comments to [outSink] and error messages
 /// to [errorSink].
 class StdLogger extends Logger {
-  final bool log;
-
-  StdLogger(this.log);
+  StdLogger();
 
   @override
   void logError(String message, [CaughtException exception]) {
@@ -290,22 +288,24 @@ class StdLogger extends Logger {
   @override
   void logError2(String message, Object exception) {
     errorSink.writeln(message);
+    if (exception != null) {
+      errorSink.writeln(exception.toString());
+    }
   }
 
   @override
   void logInformation(String message, [CaughtException exception]) {
-    if (log) {
-      outSink.writeln(message);
-      if (exception != null) {
-        errorSink.writeln(exception);
-      }
+    outSink.writeln(message);
+    if (exception != null) {
+      outSink.writeln(exception);
     }
   }
 
   @override
   void logInformation2(String message, Object exception) {
-    if (log) {
-      outSink.writeln(message);
+    outSink.writeln(message);
+    if (exception != null) {
+      outSink.writeln(exception.toString());
     }
   }
 }
