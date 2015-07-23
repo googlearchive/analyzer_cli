@@ -6,11 +6,9 @@ library analyzer_cli.test.options;
 
 import 'package:analyzer_cli/src/options.dart';
 import 'package:args/args.dart';
-import 'package:unittest/unittest.dart';
+import 'package:test/test.dart';
 
 main() {
-  groupSep = ' | ';
-
   group('CommandLineOptions', () {
     group('parse', () {
       test('defaults', () {
