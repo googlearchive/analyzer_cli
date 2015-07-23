@@ -353,7 +353,9 @@ class Driver {
       });
     }
 
-    AnalysisEngine.instance.logger = new StdLogger(options.log);
+    if (options.log) {
+      AnalysisEngine.instance.logger = new StdLogger();
+    }
 
     // Set context options.
     AnalysisOptionsImpl contextOptions = new AnalysisOptionsImpl();
