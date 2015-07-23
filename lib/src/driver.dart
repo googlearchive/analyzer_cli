@@ -361,6 +361,7 @@ class Driver {
     AnalysisOptionsImpl contextOptions = new AnalysisOptionsImpl();
     contextOptions.cacheSize = _maxCacheSize;
     contextOptions.hint = !options.disableHints;
+    contextOptions.enableNullAwareOperators = options.enableNullAwareOperators;
     contextOptions.enableStrictCallChecks = options.enableStrictCallChecks;
     contextOptions.analyzeFunctionBodiesPredicate = dietParsingPolicy;
     contextOptions.generateImplicitErrors = options.showPackageWarnings;
