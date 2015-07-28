@@ -153,7 +153,12 @@ class CommandLineOptions {
       }
     }
 
-    // OK
+    // OK.  Report deprecated options.
+    if (options.enableNullAwareOperators) {
+      print(
+          "Info: Option '--enable-null-aware-operators' is no longer needed. Null aware operators are supported by default.");
+    }
+
     return options;
   }
 
@@ -271,9 +276,7 @@ class CommandLineOptions {
       // TODO(jmesserly): link to a spec+explainer for these checks.
       ..addFlag('strong', help: 'Enable strong static checks.', hide: true)
       ..addFlag('strong-hints',
-          help: 'Enable hints about dynamic operations.',
-          hide: true);
-
+          help: 'Enable hints about dynamic operations.', hide: true);
 
     try {
       // TODO(scheglov) https://code.google.com/p/dart/issues/detail?id=11061
