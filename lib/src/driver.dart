@@ -178,10 +178,6 @@ class Driver {
     if (options.disableHints != _previousOptions.disableHints) {
       return false;
     }
-    if (options.enableNullAwareOperators !=
-        _previousOptions.enableNullAwareOperators) {
-      return false;
-    }
     if (options.enableStrictCallChecks !=
         _previousOptions.enableStrictCallChecks) {
       return false;
@@ -361,7 +357,6 @@ class Driver {
     AnalysisOptionsImpl contextOptions = new AnalysisOptionsImpl();
     contextOptions.cacheSize = _maxCacheSize;
     contextOptions.hint = !options.disableHints;
-    contextOptions.enableNullAwareOperators = options.enableNullAwareOperators;
     contextOptions.enableStrictCallChecks = options.enableStrictCallChecks;
     contextOptions.analyzeFunctionBodiesPredicate = dietParsingPolicy;
     contextOptions.generateImplicitErrors = options.showPackageWarnings;
