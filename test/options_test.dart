@@ -22,6 +22,7 @@ main() {
         expect(options.lints, isFalse);
         expect(options.displayVersion, isFalse);
         expect(options.enableStrictCallChecks, isFalse);
+        expect(options.enableSuperMixins, isFalse);
         expect(options.enableTypeChecks, isFalse);
         expect(options.ignoreUnrecognizedFlags, isFalse);
         expect(options.log, isFalse);
@@ -54,6 +55,12 @@ main() {
         CommandLineOptions options = CommandLineOptions.parse(
             ['--dart-sdk', '.', '--enable-strict-call-checks', 'foo.dart']);
         expect(options.enableStrictCallChecks, isTrue);
+      });
+
+      test('enable super mixins', () {
+        CommandLineOptions options = CommandLineOptions
+            .parse(['--dart-sdk', '.', '--supermixin', 'foo.dart']);
+        expect(options.enableSuperMixins, isTrue);
       });
 
       test('enable type checks', () {

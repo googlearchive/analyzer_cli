@@ -8,6 +8,7 @@ import 'options_test.dart' as options;
 import 'reporter_test.dart' as reporter;
 import 'sdk_ext_test.dart' as sdk_ext;
 import 'strong_mode_test.dart' as strong_mode;
+import 'super_mixin_test.dart' as super_mixin;
 
 main() {
   driver.main();
@@ -16,4 +17,5 @@ main() {
   reporter.main();
   sdk_ext.main();
   strong_mode.main();
+  super_mixin.main();
 }

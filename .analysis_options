@@ -1,3 +1,4 @@
 analyzer:
   exclude:
     - test/data/no_packages_file/sdk_ext_user.dart
+    - test/data/super_mixin_example.dart

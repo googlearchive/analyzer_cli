@@ -194,6 +194,9 @@ class Driver {
     if (options.strongMode != _previousOptions.strongMode) {
       return false;
     }
+    if (options.enableSuperMixins != _previousOptions.enableSuperMixins) {
+      return false;
+    }
     return true;
   }
 
@@ -386,6 +389,7 @@ class Driver {
     contextOptions.cacheSize = _maxCacheSize;
     contextOptions.hint = !options.disableHints;
     contextOptions.enableStrictCallChecks = options.enableStrictCallChecks;
+    contextOptions.enableSuperMixins = options.enableSuperMixins;
     contextOptions.analyzeFunctionBodiesPredicate = dietParsingPolicy;
     contextOptions.generateImplicitErrors = options.showPackageWarnings;
     contextOptions.generateSdkErrors = options.showSdkWarnings;
