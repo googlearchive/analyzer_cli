@@ -29,6 +29,7 @@ import 'package:analyzer_cli/src/analyzer_impl.dart';
 import 'package:analyzer_cli/src/options.dart';
 import 'package:dev_compiler/strong_mode.dart';
 import 'package:linter/src/plugin/linter_plugin.dart';
+import 'package:package_config/discovery.dart' as pkgDiscovery;
 import 'package:package_config/packages.dart' show Packages;
 import 'package:package_config/packages_file.dart' as pkgfile show parse;
 import 'package:package_config/src/packages_impl.dart' show MapPackages;
@@ -280,19 +281,25 @@ class Driver {
       JavaFile packageDirectory = new JavaFile(options.packageRootPath);
       resolvers.add(new PackageUriResolver([packageDirectory]));
     } else {
+      fileSystem.Resource cwd =
+          PhysicalResourceProvider.INSTANCE.getResource('.');
 
-      //TODO(pquitslund): add .packages config discovery
+      // Look for .packages.
+      packages = _discoverPackagespec(new Uri.directory(cwd.path));
 
-      PubPackageMapProvider pubPackageMapProvider =
-          new PubPackageMapProvider(PhysicalResourceProvider.INSTANCE, sdk);
-      PackageMapInfo packageMapInfo = pubPackageMapProvider.computePackageMap(
-          PhysicalResourceProvider.INSTANCE.getResource('.'));
-      Map<String, List<fileSystem.Folder>> packageMap =
-          packageMapInfo.packageMap;
-      if (packageMap != null) {
-        resolvers.add(new SdkExtUriResolver(packageMap));
-        resolvers.add(new PackageMapUriResolver(
-            PhysicalResourceProvider.INSTANCE, packageMap));
+      // Fall back to pub list-dir.
+      if (packages == null) {
+        PubPackageMapProvider pubPackageMapProvider =
+            new PubPackageMapProvider(PhysicalResourceProvider.INSTANCE, sdk);
+        PackageMapInfo packageMapInfo =
+            pubPackageMapProvider.computePackageMap(cwd);
+        Map<String, List<fileSystem.Folder>> packageMap =
+            packageMapInfo.packageMap;
+        if (packageMap != null) {
+          resolvers.add(new SdkExtUriResolver(packageMap));
+          resolvers.add(new PackageMapUriResolver(
+              PhysicalResourceProvider.INSTANCE, packageMap));
+        }
       }
     }
     resolvers.add(new FileUriResolver());
@@ -364,6 +371,21 @@ class Driver {
     contextOptions.lint = options.lints;
     context.analysisOptions = contextOptions;
     _context = context;
+  }
+
+  /// Return discovered packagespec, or `null` if none is found.
+  Packages _discoverPackagespec(Uri root) {
+    try {
+      Packages packages =
+          pkgDiscovery.findPackagesFromFile(new Uri.directory(root.path));
+      if (packages != Packages.noPackages) {
+        return packages;
+      }
+    } catch (_) {
+      // Ignore and fall through to null.
+    }
+
+    return null;
   }
 
   void _processAnalysisOptions(CommandLineOptions options) {
