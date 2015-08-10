@@ -392,8 +392,7 @@ class Driver {
   /// Return discovered packagespec, or `null` if none is found.
   Packages _discoverPackagespec(Uri root) {
     try {
-      Packages packages =
-          pkgDiscovery.findPackagesFromFile(new Uri.directory(root.path));
+      Packages packages = pkgDiscovery.findPackagesFromFile(root);
       if (packages != Packages.noPackages) {
         return packages;
       }
