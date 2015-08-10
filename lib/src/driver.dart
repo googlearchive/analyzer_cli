@@ -54,7 +54,6 @@ const int _maxCacheSize = 512;
 typedef ErrorSeverity _BatchRunnerHandler(List<String> args);
 
 class Driver {
-
   /// The plugins that are defined outside the `analyzer_cli` package.
   List<Plugin> _userDefinedPlugins = <Plugin>[];
 
@@ -286,7 +285,6 @@ class Driver {
       if (packages != null) {
         packageMap = _getPackageMap(packages);
       } else {
-
         // Fall back to pub list-dir.
 
         PubPackageMapProvider pubPackageMapProvider =
@@ -413,8 +411,10 @@ class Driver {
 
     Map<String, List<fileSystem.Folder>> folderMap =
         new Map<String, List<fileSystem.Folder>>();
-    packages.asMap().forEach((String path, Uri uri) {
-      folderMap[path] = [PhysicalResourceProvider.INSTANCE.getFolder(uri.path)];
+    packages.asMap().forEach((String packagePath, Uri uri) {
+      folderMap[packagePath] = [
+        PhysicalResourceProvider.INSTANCE.getFolder(path.fromUri(uri))
+      ];
     });
     return folderMap;
   }
@@ -564,8 +564,9 @@ class _PackageRootPackageMapBuilder {
     for (var package in packages) {
       var packageName = path.basename(package.path);
       var realPath = package.resolveSymbolicLinksSync();
-      result[packageName] =
-          [PhysicalResourceProvider.INSTANCE.getFolder(realPath)];
+      result[packageName] = [
+        PhysicalResourceProvider.INSTANCE.getFolder(realPath)
+      ];
     }
     return result;
   }
