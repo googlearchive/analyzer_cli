@@ -4,8 +4,11 @@
 
 library analyzer_cli.test.driver;
 
+import 'dart:io';
+
 import 'package:analyzer/plugin/options.dart';
 import 'package:analyzer_cli/src/driver.dart';
+import 'package:path/path.dart' as path;
 import 'package:plugin/plugin.dart';
 import 'package:test/test.dart';
 import 'package:yaml/src/yaml_node.dart';
@@ -24,6 +27,63 @@ main() {
         ]);
         expect(processor.options['test_plugin'], isNotNull);
         expect(processor.exception, isNull);
+      });
+    });
+
+    group('in temp directory', () {
+      StringSink savedOutSink, savedErrorSink;
+      int savedExitCode;
+      Directory savedCurrentDirectory;
+      Directory tempDir;
+      setUp(() {
+        savedOutSink = outSink;
+        savedErrorSink = errorSink;
+        savedExitCode = exitCode;
+        outSink = new StringBuffer();
+        errorSink = new StringBuffer();
+        savedCurrentDirectory = Directory.current;
+        tempDir = Directory.systemTemp.createTempSync('analyzer_');
+      });
+      tearDown(() {
+        outSink = savedOutSink;
+        errorSink = savedErrorSink;
+        exitCode = savedExitCode;
+        Directory.current = savedCurrentDirectory;
+        tempDir.deleteSync(recursive: true);
+      });
+
+      test('packages folder', () {
+        Directory.current = tempDir;
+        new File(path.join(tempDir.path, 'test.dart')).writeAsStringSync('''
+import 'package:foo/bar.dart';
+main() {
+  baz();
+}
+        ''');
+        Directory packagesDir =
+            new Directory(path.join(tempDir.path, 'packages'));
+        packagesDir.createSync();
+        Directory fooDir = new Directory(path.join(packagesDir.path, 'foo'));
+        fooDir.createSync();
+        new File(path.join(fooDir.path, 'bar.dart')).writeAsStringSync('''
+void baz() {}
+        ''');
+        new Driver().start(['test.dart']);
+        expect(exitCode, 0);
+      });
+
+      test('no package resolution', () {
+        Directory.current = tempDir;
+        new File(path.join(tempDir.path, 'test.dart')).writeAsStringSync('''
+import 'package:path/path.dart';
+main() {}
+        ''');
+        new Driver().start(['test.dart']);
+        expect(exitCode, 3);
+        String stdout = outSink.toString();
+        expect(stdout, contains('[error] Target of URI does not exist'));
+        expect(stdout, contains('1 error found.'));
+        expect(errorSink.toString(), '');
       });
     });
   });
