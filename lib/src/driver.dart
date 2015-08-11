@@ -285,7 +285,7 @@ class Driver {
       if (packages != null) {
         packageMap = _getPackageMap(packages);
       } else {
-        // Fall back to pub list-dir.
+        // Fall back to pub list-package-dirs.
 
         PubPackageMapProvider pubPackageMapProvider =
             new PubPackageMapProvider(PhysicalResourceProvider.INSTANCE, sdk);
@@ -293,8 +293,13 @@ class Driver {
             pubPackageMapProvider.computePackageMap(cwd);
         packageMap = packageMapInfo.packageMap;
 
-        packageUriResolver = new PackageMapUriResolver(
-            PhysicalResourceProvider.INSTANCE, packageMap);
+        // Only create a packageUriResolver if pub list-package-dirs succeeded.
+        // If it failed, that's not a problem; it simply means we have no way
+        // to resolve packages.
+        if (packageMapInfo.packageMap != null) {
+          packageUriResolver = new PackageMapUriResolver(
+              PhysicalResourceProvider.INSTANCE, packageMap);
+        }
       }
     }
 
