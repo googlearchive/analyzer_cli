@@ -54,7 +54,6 @@ const int _maxCacheSize = 512;
 typedef ErrorSeverity _BatchRunnerHandler(List<String> args);
 
 class Driver {
-
   /// The plugins that are defined outside the `analyzer_cli` package.
   List<Plugin> _userDefinedPlugins = <Plugin>[];
 
@@ -252,13 +251,11 @@ class Driver {
   /// [SourceFactory] that has been configured accordingly.
   SourceFactory _chooseUriResolutionPolicy(
       CommandLineOptions options, Map<String, String> customUrlMappings) {
-    List<UriResolver> resolvers = [
-      new CustomUriResolver(customUrlMappings),
-      new DartUriResolver(sdk)
-    ];
-
     Packages packages;
+    Map<String, List<fileSystem.Folder>> packageMap;
+    UriResolver packageUriResolver;
 
+    // Process options, caching package resolution details.
     if (options.packageConfigPath != null) {
       String packageConfigPath = options.packageConfigPath;
       Uri fileUri = new Uri.file(packageConfigPath);
@@ -267,19 +264,17 @@ class Driver {
         List<int> bytes = configFile.readAsBytesSync();
         Map<String, Uri> map = pkgfile.parse(bytes, configFile.uri);
         packages = new MapPackages(map);
+        packageMap = _getPackageMap(packages);
       } catch (e) {
         printAndFail(
             'Unable to read package config data from $packageConfigPath: $e');
       }
     } else if (options.packageRootPath != null) {
-      Map<String, List<fileSystem.Folder>> packageMap =
-          _PackageRootPackageMapBuilder
-              .buildPackageMap(options.packageRootPath);
-      if (packageMap != null) {
-        resolvers.add(new SdkExtUriResolver(packageMap));
-      }
+      packageMap = _PackageRootPackageMapBuilder
+          .buildPackageMap(options.packageRootPath);
+
       JavaFile packageDirectory = new JavaFile(options.packageRootPath);
-      resolvers.add(new PackageUriResolver([packageDirectory]));
+      packageUriResolver = new PackageUriResolver([packageDirectory]);
     } else {
       fileSystem.Resource cwd =
           PhysicalResourceProvider.INSTANCE.getResource('.');
@@ -287,22 +282,43 @@ class Driver {
       // Look for .packages.
       packages = _discoverPackagespec(new Uri.directory(cwd.path));
 
-      // Fall back to pub list-dir.
-      if (packages == null) {
+      if (packages != null) {
+        packageMap = _getPackageMap(packages);
+      } else {
+        // Fall back to pub list-dir.
+
         PubPackageMapProvider pubPackageMapProvider =
             new PubPackageMapProvider(PhysicalResourceProvider.INSTANCE, sdk);
         PackageMapInfo packageMapInfo =
             pubPackageMapProvider.computePackageMap(cwd);
-        Map<String, List<fileSystem.Folder>> packageMap =
-            packageMapInfo.packageMap;
-        if (packageMap != null) {
-          resolvers.add(new SdkExtUriResolver(packageMap));
-          resolvers.add(new PackageMapUriResolver(
-              PhysicalResourceProvider.INSTANCE, packageMap));
-        }
+        packageMap = packageMapInfo.packageMap;
+
+        packageUriResolver = new PackageMapUriResolver(
+            PhysicalResourceProvider.INSTANCE, packageMap);
       }
     }
+
+    // Now, build our resolver list.
+
+    // Custom and 'dart:' URIs come first.
+    List<UriResolver> resolvers = [
+      new CustomUriResolver(customUrlMappings),
+      new DartUriResolver(sdk)
+    ];
+
+    // Next SdkExts.
+    if (packageMap != null) {
+      resolvers.add(new SdkExtUriResolver(packageMap));
+    }
+
+    // Then package URIs.
+    if (packageUriResolver != null) {
+      resolvers.add(packageUriResolver);
+    }
+
+    // Finally files.
     resolvers.add(new FileUriResolver());
+
     return new SourceFactory(resolvers, packages);
   }
 
@@ -376,8 +392,7 @@ class Driver {
   /// Return discovered packagespec, or `null` if none is found.
   Packages _discoverPackagespec(Uri root) {
     try {
-      Packages packages =
-          pkgDiscovery.findPackagesFromFile(new Uri.directory(root.path));
+      Packages packages = pkgDiscovery.findPackagesFromFile(root);
       if (packages != Packages.noPackages) {
         return packages;
       }
@@ -386,6 +401,21 @@ class Driver {
     }
 
     return null;
+  }
+
+  Map<String, List<fileSystem.Folder>> _getPackageMap(Packages packages) {
+    if (packages == null) {
+      return null;
+    }
+
+    Map<String, List<fileSystem.Folder>> folderMap =
+        new Map<String, List<fileSystem.Folder>>();
+    packages.asMap().forEach((String packagePath, Uri uri) {
+      folderMap[packagePath] = [
+        PhysicalResourceProvider.INSTANCE.getFolder(path.fromUri(uri))
+      ];
+    });
+    return folderMap;
   }
 
   void _processAnalysisOptions(CommandLineOptions options) {
@@ -533,8 +563,9 @@ class _PackageRootPackageMapBuilder {
     for (var package in packages) {
       var packageName = path.basename(package.path);
       var realPath = package.resolveSymbolicLinksSync();
-      result[packageName] =
-          [PhysicalResourceProvider.INSTANCE.getFolder(realPath)];
+      result[packageName] = [
+        PhysicalResourceProvider.INSTANCE.getFolder(realPath)
+      ];
     }
     return result;
   }
