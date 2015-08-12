@@ -5,10 +5,12 @@
 library analyzer_cli.test.strong_mode;
 
 import 'dart:io';
-import 'dart:mirrors';
+
 import 'package:analyzer_cli/src/driver.dart' show Driver, errorSink, outSink;
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
+
+import 'utils.dart';
 
 /// End-to-end test for --strong checking.
 ///
@@ -47,11 +49,3 @@ void main() {
     });
   });
 }
-
-/// Gets the test directory in a way that works with
-/// package:test and package:unittest.
-/// See <https://github.com/dart-lang/test/issues/110> for more info.
-final String testDirectory =
-    path.dirname((reflectClass(_TestUtils).owner as LibraryMirror).uri.path);
-
-class _TestUtils {}

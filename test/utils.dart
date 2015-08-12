@@ -5,6 +5,7 @@
 library analyzer_cli.test.utils;
 
 import 'dart:io';
+import 'dart:mirrors';
 
 import 'package:analyzer/analyzer.dart';
 import 'package:path/path.dart' as pathos;
@@ -24,8 +25,8 @@ String errorsForFile(String contents) {
     try {
       parseDartFile(path);
     } on AnalyzerErrorGroup catch (e) {
-      return e.toString().replaceAllMapped(new RegExp(
-              r"^(Error on line \d+ of )((?:[A-Z]+:)?[^:]+): .*$",
+      return e.toString().replaceAllMapped(
+          new RegExp(r"^(Error on line \d+ of )((?:[A-Z]+:)?[^:]+): .*$",
               multiLine: true),
           (match) => match[1] + pathos.basename(match[2]) + ': ...');
     }
@@ -45,3 +46,11 @@ dynamic withTempDir(fn(String path)) {
     new Directory(tempDir).deleteSync(recursive: true);
   }
 }
+
+/// Gets the test directory in a way that works with
+/// package:test and package:unittest.
+/// See <https://github.com/dart-lang/test/issues/110> for more info.
+final String testDirectory = pathos.dirname(
+    pathos.fromUri((reflectClass(_TestUtils).owner as LibraryMirror).uri));
+
+class _TestUtils {}

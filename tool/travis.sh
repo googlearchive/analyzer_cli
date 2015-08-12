@@ -14,7 +14,9 @@ dartanalyzer --fatal-warnings \
   test/all.dart
 
 # Run the tests.
-pub run test
+# Note: the "-j1" is necessary because some tests temporarily change the
+# working directory, and the working directory state is shared across isolates.
+pub run test -j1
 
 # Install dart_coveralls; gather and send coverage data.
 if [ "$COVERALLS_TOKEN" ]; then
