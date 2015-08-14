@@ -7,6 +7,6 @@ Command line interface for the Dart `analyzer` library [package](https://pub.dar
 
 ## Features and bugs
 
-Please file feature requests and bugs at the [issue tracker][tracker].
+Please file feature requests and bugs at the  [issue tracker][tracker].
 
 [tracker]: https://github.com/dart-lang/analyzer_cli/issues
