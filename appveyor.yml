@@ -12,5 +12,7 @@ install:
   - set PATH=%PATH%;%APPDATA%\Pub\Cache\bin
   - pub get
 
+build: off
+
 test_script:
   - pub run test -j1
