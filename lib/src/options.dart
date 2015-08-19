@@ -42,6 +42,9 @@ class CommandLineOptions {
   /// "call" methods (fixes dartbug.com/21938).
   final bool enableStrictCallChecks;
 
+  /// Whether to relax restrictions on mixins (DEP 34).
+  final bool enableSuperMixins;
+
   /// Whether to treat type mismatches found during constant evaluation as
   /// errors.
   final bool enableTypeChecks;
@@ -100,6 +103,7 @@ class CommandLineOptions {
         displayVersion = args['version'],
         enableNullAwareOperators = args['enable-null-aware-operators'],
         enableStrictCallChecks = args['enable-strict-call-checks'],
+        enableSuperMixins = args['supermixin'],
         enableTypeChecks = args['enable_type_checks'],
         ignoreUnrecognizedFlags = args['ignore-unrecognized-flags'],
         lints = args['lints'],
@@ -260,6 +264,11 @@ class CommandLineOptions {
           hide: true)
       ..addFlag('enable-strict-call-checks',
           help: 'Fix issue 21938.',
+          defaultsTo: false,
+          negatable: false,
+          hide: true)
+      ..addFlag('supermixin',
+          help: 'Relax restrictions on mixins (DEP 34).',
           defaultsTo: false,
           negatable: false,
           hide: true)
