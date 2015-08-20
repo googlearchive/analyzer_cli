@@ -99,7 +99,11 @@ class Driver {
         return _analyzeAll(options);
       });
     } else {
-      _analyzeAll(options);
+      ErrorSeverity severity = _analyzeAll(options);
+      // In case of error propogate exit code.
+      if (severity == ErrorSeverity.ERROR) {
+        exitCode = severity.ordinal;
+      }
     }
   }
 
@@ -108,10 +112,15 @@ class Driver {
     if (!options.machineFormat) {
       outSink.writeln("Analyzing ${options.sourceFiles}...");
     }
-
+    
     // Create a context, or re-use the previous one.
-    _createAnalysisContext(options);
-
+    try {
+      _createAnalysisContext(options);
+    } on _DriverError catch (error) {
+      outSink.writeln(error.msg);
+      return ErrorSeverity.ERROR;
+    }
+    
     // Add all the files to be analyzed en masse to the context.  Skip any
     // files that were added earlier (whether explicitly or implicitly) to
     // avoid causing those files to be unnecessarily re-read.
@@ -558,6 +567,11 @@ class _BatchRunner {
   }
 }
 
+class _DriverError implements Exception {
+  String msg;
+  _DriverError(this.msg);
+}
+
 /// [SdkExtUriResolver] needs a Map from package name to folder. In the case
 /// that the analyzer is invoked with a --package-root option, we need to
 /// manually create this mapping. Given [packageRootPath],
@@ -567,6 +581,9 @@ class _PackageRootPackageMapBuilder {
   static Map<String, List<fileSystem.Folder>> buildPackageMap(
       String packageRootPath) {
     var packageRoot = new Directory(packageRootPath);
+    if (!packageRoot.existsSync()) {
+      throw new _DriverError('Package root directory ($packageRootPath) does not exist.');
+    }
     var packages = packageRoot.listSync(followLinks: false);
     var result = new Map<String, List<fileSystem.Folder>>();
     for (var package in packages) {
