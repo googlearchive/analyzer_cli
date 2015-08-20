@@ -91,7 +91,10 @@ main() {}
         new Driver().start(['--package-root', 'does/not/exist', 'test.dart']);
         String stdout = outSink.toString();
         expect(exitCode, 3);
-        expect(stdout, contains('Package root directory (does/not/exist) does not exist.'));
+        expect(
+            stdout,
+            contains(
+                'Package root directory (does/not/exist) does not exist.'));
       });
     });
   });

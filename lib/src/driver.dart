@@ -112,7 +112,7 @@ class Driver {
     if (!options.machineFormat) {
       outSink.writeln("Analyzing ${options.sourceFiles}...");
     }
-    
+
     // Create a context, or re-use the previous one.
     try {
       _createAnalysisContext(options);
@@ -120,7 +120,7 @@ class Driver {
       outSink.writeln(error.msg);
       return ErrorSeverity.ERROR;
     }
-    
+
     // Add all the files to be analyzed en masse to the context.  Skip any
     // files that were added earlier (whether explicitly or implicitly) to
     // avoid causing those files to be unnecessarily re-read.
@@ -582,7 +582,8 @@ class _PackageRootPackageMapBuilder {
       String packageRootPath) {
     var packageRoot = new Directory(packageRootPath);
     if (!packageRoot.existsSync()) {
-      throw new _DriverError('Package root directory ($packageRootPath) does not exist.');
+      throw new _DriverError(
+          'Package root directory ($packageRootPath) does not exist.');
     }
     var packages = packageRoot.listSync(followLinks: false);
     var result = new Map<String, List<fileSystem.Folder>>();
