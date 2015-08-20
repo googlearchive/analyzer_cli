@@ -3,7 +3,6 @@
 // BSD-style license that can be found in the LICENSE file.
 
 @TestOn("vm")
-
 library analyzer_cli.test.driver;
 
 import 'dart:io';
@@ -86,6 +85,16 @@ main() {}
         expect(stdout, contains('[error] Target of URI does not exist'));
         expect(stdout, contains('1 error found.'));
         expect(errorSink.toString(), '');
+      });
+
+      test('bad package root', () {
+        new Driver().start(['--package-root', 'does/not/exist', 'test.dart']);
+        String stdout = outSink.toString();
+        expect(exitCode, 3);
+        expect(
+            stdout,
+            contains(
+                'Package root directory (does/not/exist) does not exist.'));
       });
     });
   });
