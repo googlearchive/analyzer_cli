@@ -9,6 +9,7 @@ import 'dart:io';
 
 import 'package:analyzer/plugin/options.dart';
 import 'package:analyzer_cli/src/driver.dart';
+import 'package:linter/src/plugin/linter_plugin.dart';
 import 'package:path/path.dart' as path;
 import 'package:plugin/plugin.dart';
 import 'package:test/test.dart';
@@ -28,6 +29,25 @@ main() {
         ]);
         expect(processor.options['test_plugin'], isNotNull);
         expect(processor.exception, isNull);
+      });
+    });
+
+    group('linter', () {
+      test('gets analysis options', () {
+        Driver driver = new Driver();
+        driver.start([
+          '--options',
+          'test/data/linter_project/.analysis_options',
+          '--lints',
+          'test/data/linter_project/test_file.dart'
+        ]);
+
+        /// Lints should be enabled.
+        expect(driver.context.analysisOptions.lint, isTrue);
+
+        /// The .analysis_options file only specifies 'camel_case_types'.
+        var lintNames = linterPlugin.lintRules.map((r) => r.name);
+        expect(lintNames, orderedEquals(['camel_case_types']));
       });
     });
 
