@@ -64,6 +64,11 @@ class Driver {
   /// `null` if [_analyzeAll] hasn't been called yet.
   AnalysisContext _context;
 
+  /// This Driver's current analysis context.
+  ///
+  /// *Visible for testing.*
+  AnalysisContext get context => _context;
+
   /// The strong mode checker corresponding to [_context], or `null` if strong
   /// mode is not enabled or a context is not available yet.
   StrongChecker _strongChecker;
