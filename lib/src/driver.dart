@@ -25,8 +25,10 @@ import 'package:analyzer/src/generated/java_io.dart';
 import 'package:analyzer/src/generated/sdk_io.dart';
 import 'package:analyzer/src/generated/source.dart';
 import 'package:analyzer/src/generated/source_io.dart';
+import 'package:analyzer/src/plugin/plugin_configuration.dart';
 import 'package:analyzer_cli/src/analyzer_impl.dart';
 import 'package:analyzer_cli/src/options.dart';
+import 'package:analyzer_cli/src/plugin/plugin_config_processor_plugin.dart';
 import 'package:dev_compiler/strong_mode.dart';
 import 'package:linter/src/plugin/linter_plugin.dart';
 import 'package:package_config/discovery.dart' as pkgDiscovery;
@@ -36,7 +38,11 @@ import 'package:package_config/src/packages_impl.dart' show MapPackages;
 import 'package:path/path.dart' as path;
 import 'package:plugin/manager.dart';
 import 'package:plugin/plugin.dart';
+import 'package:source_span/source_span.dart';
 import 'package:yaml/yaml.dart';
+
+/// The maximum number of sources for which AST structures should be kept in the cache.
+const int _maxCacheSize = 512;
 
 /// Shared IO sink for standard error reporting.
 ///
@@ -48,12 +54,26 @@ StringSink errorSink = stderr;
 /// *Visible for testing.*
 StringSink outSink = stdout;
 
-/// The maximum number of sources for which AST structures should be kept in the cache.
-const int _maxCacheSize = 512;
-
 typedef ErrorSeverity _BatchRunnerHandler(List<String> args);
 
 class Driver {
+  /// Emits an error message to [errorSink] if plugin config can't be read.
+  static final ErrorHandler _pluginConfigErrorHandler = (Exception e) {
+    String details;
+    if (e is PluginConfigFormatException) {
+      details = e.message;
+      var node = e.yamlNode;
+      if (node is YamlNode) {
+        SourceLocation location = node.span.start;
+        details += ' (line ${location.line}, column ${location.column})';
+      }
+    } else {
+      details = e.toString();
+    }
+
+    errorSink.writeln('Plugin configuration skipped: $details');
+  };
+
   /// The plugins that are defined outside the `analyzer_cli` package.
   List<Plugin> _userDefinedPlugins = <Plugin>[];
 
@@ -64,10 +84,8 @@ class Driver {
   /// `null` if [_analyzeAll] hasn't been called yet.
   AnalysisContext _context;
 
-  /// This Driver's current analysis context.
-  ///
-  /// *Visible for testing.*
-  AnalysisContext get context => _context;
+  /// Reads plugin config info from `.analysis_options`.
+  PluginConfigProcessorPlugin _pluginConfigProcessorPlugin;
 
   /// The strong mode checker corresponding to [_context], or `null` if strong
   /// mode is not enabled or a context is not available yet.
@@ -76,6 +94,18 @@ class Driver {
   /// If [_context] is not `null`, the [CommandLineOptions] that guided its
   /// creation.
   CommandLineOptions _previousOptions;
+
+  Driver()
+      : _pluginConfigProcessorPlugin =
+            new PluginConfigProcessorPlugin(_pluginConfigErrorHandler);
+
+  /// This Driver's current analysis context.
+  ///
+  /// *Visible for testing.*
+  AnalysisContext get context => _context;
+
+  /// Plugin configuration as processed from `.analysis_options`.
+  PluginConfig get pluginConfig => _pluginConfigProcessorPlugin.pluginConfig;
 
   /// Set the [plugins] that are defined outside the `analyzer_cli` package.
   void set userDefinedPlugins(List<Plugin> plugins) {
@@ -463,6 +493,7 @@ class Driver {
 
   void _processPlugins() {
     List<Plugin> plugins = <Plugin>[];
+    plugins.add(_pluginConfigProcessorPlugin);
     plugins.add(linterPlugin);
     plugins.addAll(AnalysisEngine.instance.supportedPlugins);
     plugins.addAll(_userDefinedPlugins);

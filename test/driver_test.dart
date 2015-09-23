@@ -18,7 +18,7 @@ import 'package:yaml/src/yaml_node.dart';
 main() {
   group('Driver', () {
     group('options', () {
-      test('processing', () {
+      test('custom processor', () {
         Driver driver = new Driver();
         TestProcessor processor = new TestProcessor();
         driver.userDefinedPlugins = [new TestPlugin(processor)];
@@ -29,6 +29,39 @@ main() {
         ]);
         expect(processor.options['test_plugin'], isNotNull);
         expect(processor.exception, isNull);
+      });
+      group('plugin processing', () {
+        StringSink savedErrorSink;
+        setUp(() {
+          savedErrorSink = errorSink;
+          errorSink = new StringBuffer();
+        });
+        tearDown(() {
+          errorSink = savedErrorSink;
+        });
+        test('bad format', () {
+          Driver driver = new Driver();
+          driver.start([
+            '--options',
+            'test/data/bad_plugin_options.yaml',
+            'test/data/test_file.dart'
+          ]);
+          expect(
+              errorSink.toString(),
+              equals(
+                  'Plugin configuration skipped: Unrecognized plugin config format (expected `YamlMap`, got `YamlList`) (line 2, column 4)\n'));
+        });
+        test('plugin config', () {
+          Driver driver = new Driver();
+          driver.start([
+            '--options',
+            'test/data/plugin_options.yaml',
+            'test/data/test_file.dart'
+          ]);
+          var plugins = driver.pluginConfig.plugins;
+          expect(plugins, hasLength(1));
+          expect(plugins.first.name, equals('my_plugin1'));
+        });
       });
     });
 

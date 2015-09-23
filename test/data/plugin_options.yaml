@@ -1,0 +1,4 @@
+analyzer:
+  plugins:
+    my_plugin1: any
+    
