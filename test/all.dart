@@ -5,6 +5,7 @@
 import 'driver_test.dart' as driver;
 import 'error_test.dart' as error;
 import 'options_test.dart' as options;
+import 'plugin_manager_test.dart' as plugin_manager;
 import 'reporter_test.dart' as reporter;
 import 'sdk_ext_test.dart' as sdk_ext;
 import 'strong_mode_test.dart' as strong_mode;
@@ -14,6 +15,7 @@ main() {
   driver.main();
   error.main();
   options.main();
+  plugin_manager.main();
   reporter.main();
   sdk_ext.main();
   strong_mode.main();
