@@ -49,7 +49,7 @@ main() {
           expect(
               errorSink.toString(),
               equals(
-                  'Plugin configuration skipped: Unrecognized plugin config format (expected `YamlMap`, got `YamlList`) (line 2, column 4)\n'));
+                  'Plugin configuration skipped: Unrecognized plugin config format, expected `YamlMap`, got `YamlList` (line 2, column 4)\n'));
         });
         test('plugin config', () {
           Driver driver = new Driver();
