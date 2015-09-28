@@ -8,15 +8,10 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:analyzer/file_system/physical_file_system.dart';
-import 'package:analyzer/plugin/options.dart';
 import 'package:analyzer/source/analysis_options_provider.dart';
-import 'package:analyzer/src/generated/engine.dart';
 import 'package:analyzer/src/plugin/plugin_configuration.dart';
 import 'package:analyzer_cli/src/driver.dart';
 import 'package:analyzer_cli/src/options.dart';
-import 'package:analyzer_cli/src/plugin/plugin_config_processor_plugin.dart';
-import 'package:plugin/manager.dart';
-import 'package:plugin/plugin.dart';
 import 'package:source_span/source_span.dart';
 import 'package:yaml/src/yaml_node.dart';
 
@@ -86,14 +81,12 @@ class BootLoader {
   };
 
   /// Reads plugin config info from `.analysis_options`.
-  PluginConfigProcessorPlugin _pluginConfigProcessorPlugin =
-      new PluginConfigProcessorPlugin(_pluginConfigErrorHandler);
+  PluginConfigOptionsProcessor _pluginOptionsProcessor =
+      new PluginConfigOptionsProcessor(_pluginConfigErrorHandler);
 
   /// Create a loadable analyzer image configured with plugins derived from
   /// the given analyzer command-line `args`.
   Image createImage(List<String> args) {
-    _processPlugins();
-
     // Parse commandline options.
     CommandLineOptions options = CommandLineOptions.parse(args);
 
@@ -101,7 +94,7 @@ class BootLoader {
     _processAnalysisOptions(options);
 
     // TODO(pquitslund): Pass in .packages info
-    return new Image(_pluginConfigProcessorPlugin.pluginConfig,
+    return new Image(_pluginOptionsProcessor.config,
         args: args, packageRootPath: options.packageRootPath);
   }
 
@@ -110,27 +103,16 @@ class BootLoader {
     var filePath = options.analysisOptionsFile != null
         ? options.analysisOptionsFile
         : AnalysisOptionsProvider.ANALYSIS_OPTIONS_NAME;
-    List<OptionsProcessor> optionsProcessors =
-        AnalysisEngine.instance.optionsPlugin.optionsProcessors;
     try {
       var file = PhysicalResourceProvider.INSTANCE.getFile(filePath);
       AnalysisOptionsProvider analysisOptionsProvider =
           new AnalysisOptionsProvider();
       Map<String, YamlNode> options =
           analysisOptionsProvider.getOptionsFromFile(file);
-      optionsProcessors
-          .forEach((OptionsProcessor p) => p.optionsProcessed(options));
+      _pluginOptionsProcessor.optionsProcessed(options);
     } on Exception catch (e) {
-      optionsProcessors.forEach((OptionsProcessor p) => p.onError(e));
+      _pluginOptionsProcessor.onError(e);
     }
-  }
-
-  void _processPlugins() {
-    List<Plugin> plugins = <Plugin>[];
-    plugins.add(_pluginConfigProcessorPlugin);
-    plugins.addAll(AnalysisEngine.instance.supportedPlugins);
-    ExtensionManager manager = new ExtensionManager();
-    manager.processPlugins(plugins);
   }
 }
 

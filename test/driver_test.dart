@@ -8,6 +8,7 @@ library analyzer_cli.test.driver;
 import 'dart:io';
 
 import 'package:analyzer/plugin/options.dart';
+import 'package:analyzer_cli/src/bootloader.dart';
 import 'package:analyzer_cli/src/driver.dart';
 import 'package:linter/src/plugin/linter_plugin.dart';
 import 'package:path/path.dart' as path;
@@ -29,39 +30,6 @@ main() {
         ]);
         expect(processor.options['test_plugin'], isNotNull);
         expect(processor.exception, isNull);
-      });
-      group('plugin processing', () {
-        StringSink savedErrorSink;
-        setUp(() {
-          savedErrorSink = errorSink;
-          errorSink = new StringBuffer();
-        });
-        tearDown(() {
-          errorSink = savedErrorSink;
-        });
-        test('bad format', () {
-          Driver driver = new Driver();
-          driver.start([
-            '--options',
-            'test/data/bad_plugin_options.yaml',
-            'test/data/test_file.dart'
-          ]);
-          expect(
-              errorSink.toString(),
-              equals(
-                  'Plugin configuration skipped: Unrecognized plugin config format, expected `YamlMap`, got `YamlList` (line 2, column 4)\n'));
-        });
-        test('plugin config', () {
-          Driver driver = new Driver();
-          driver.start([
-            '--options',
-            'test/data/plugin_options.yaml',
-            'test/data/test_file.dart'
-          ]);
-          var plugins = driver.pluginConfig.plugins;
-          expect(plugins, hasLength(1));
-          expect(plugins.first.name, equals('my_plugin1'));
-        });
       });
     });
 
@@ -148,6 +116,41 @@ main() {}
             stdout,
             contains(
                 'Package root directory (does/not/exist) does not exist.'));
+      });
+    });
+  });
+  group('Bootloader', () {
+    group('plugin processing', () {
+      StringSink savedErrorSink;
+      setUp(() {
+        savedErrorSink = errorSink;
+        errorSink = new StringBuffer();
+      });
+      tearDown(() {
+        errorSink = savedErrorSink;
+      });
+      test('bad format', () {
+        BootLoader loader = new BootLoader();
+        loader.createImage([
+          '--options',
+          'test/data/bad_plugin_options.yaml',
+          'test/data/test_file.dart'
+        ]);
+        expect(
+            errorSink.toString(),
+            equals(
+                'Plugin configuration skipped: Unrecognized plugin config format, expected `YamlMap`, got `YamlList` (line 2, column 4)\n'));
+      });
+      test('plugin config', () {
+        BootLoader loader = new BootLoader();
+        Image image = loader.createImage([
+          '--options',
+          'test/data/plugin_options.yaml',
+          'test/data/test_file.dart'
+        ]);
+        var plugins = image.config.plugins;
+        expect(plugins, hasLength(1));
+        expect(plugins.first.name, equals('my_plugin1'));
       });
     });
   });
