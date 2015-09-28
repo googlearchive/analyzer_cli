@@ -209,10 +209,6 @@ class Driver {
       return false;
     }
     if (!_equalMaps(
-        options.customUrlMappings, _previousOptions.customUrlMappings)) {
-      return false;
-    }
-    if (!_equalMaps(
         options.definedVariables, _previousOptions.definedVariables)) {
       return false;
     }
@@ -296,8 +292,7 @@ class Driver {
   /// Decide on the appropriate method for resolving URIs based on the given
   /// [options] and [customUrlMappings] settings, and return a
   /// [SourceFactory] that has been configured accordingly.
-  SourceFactory _chooseUriResolutionPolicy(
-      CommandLineOptions options, Map<String, String> customUrlMappings) {
+  SourceFactory _chooseUriResolutionPolicy(CommandLineOptions options) {
     Packages packages;
     Map<String, List<fileSystem.Folder>> packageMap;
     UriResolver packageUriResolver;
@@ -352,11 +347,8 @@ class Driver {
 
     // Now, build our resolver list.
 
-    // Custom and 'dart:' URIs come first.
-    List<UriResolver> resolvers = [
-      new CustomUriResolver(customUrlMappings),
-      new DartUriResolver(sdk)
-    ];
+    // 'dart:' URIs come first.
+    List<UriResolver> resolvers = [new DartUriResolver(sdk)];
 
     // Next SdkExts.
     if (packageMap != null) {
@@ -401,8 +393,7 @@ class Driver {
     _previousOptions = options;
     // Choose a package resolution policy and a diet parsing policy based on
     // the command-line options.
-    SourceFactory sourceFactory =
-        _chooseUriResolutionPolicy(options, options.customUrlMappings);
+    SourceFactory sourceFactory = _chooseUriResolutionPolicy(options);
     AnalyzeFunctionBodiesPredicate dietParsingPolicy =
         _chooseDietParsingPolicy(options);
     // Create a context using these policies.

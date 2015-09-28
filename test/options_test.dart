@@ -3,7 +3,6 @@
 // BSD-style license that can be found in the LICENSE file.
 
 @TestOn("vm")
-
 library analyzer_cli.test.options;
 
 import 'package:analyzer_cli/src/options.dart';
@@ -33,8 +32,6 @@ main() {
         expect(options.showSdkWarnings, isFalse);
         expect(options.sourceFiles, equals(['foo.dart']));
         expect(options.warningsAreFatal, isFalse);
-        expect(options.customUrlMappings, isNotNull);
-        expect(options.customUrlMappings.isEmpty, isTrue);
         expect(options.strongMode, isFalse);
       });
 
@@ -130,23 +127,10 @@ main() {
         expect(options.warningsAreFatal, isTrue);
       });
 
-      test('customUrlMappings', () {
-        CommandLineOptions options = CommandLineOptions.parse([
-          '--dart-sdk',
-          '.',
-          '--url-mapping',
-          'dart:dummy,/path/to/dummy.dart',
-          'foo.dart'
-        ]);
-        expect(options.customUrlMappings, isNotNull);
-        expect(options.customUrlMappings.isEmpty, isFalse);
-        expect(options.customUrlMappings['dart:dummy'],
-            equals('/path/to/dummy.dart'));
-      });
-
       test('notice unrecognized flags', () {
-        expect(() => new CommandLineParser().parse(
-                ['--bar', '--baz', 'foo.dart'], {}),
+        expect(
+            () => new CommandLineParser()
+                .parse(['--bar', '--baz', 'foo.dart'], {}),
             throwsA(new isInstanceOf<FormatException>()));
       });
 
@@ -183,13 +167,9 @@ main() {
 
       test("can't specify package and package-root", () {
         var failureMessage;
-        CommandLineOptions.parse([
-          '--package-root',
-          '.',
-          '--packages',
-          '.',
-          'foo.dart'
-        ], (msg) => failureMessage = msg);
+        CommandLineOptions.parse(
+            ['--package-root', '.', '--packages', '.', 'foo.dart'],
+            (msg) => failureMessage = msg);
         expect(failureMessage,
             equals("Cannot specify both '--package-root' and '--packages."));
       });
