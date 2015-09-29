@@ -4,7 +4,6 @@
 
 library analyzer_cli.src.bootloader;
 
-import 'dart:io';
 import 'dart:isolate';
 
 import 'package:analyzer/file_system/physical_file_system.dart';
@@ -30,7 +29,6 @@ String validate(PluginInfo plugin) {
     // All good.
     return null;
   }
-
   return 'Plugin ${plugin.name} skipped, config missing: ${missing.join(", ")}';
 }
 
@@ -168,37 +166,17 @@ class Image {
   /// `.analyzer_options` which is then run in a spawned isolate.
   void load() {
     List<PluginInfo> plugins = _validate(config.plugins);
-
     String mainSource = new Assembler(plugins).createMain();
 
     Uri uri =
         Uri.parse('data:application/dart;charset=utf-8,${Uri.encodeComponent(
-            mainSource)}');
-
-    ReceivePort errorListener = new ReceivePort();
-    errorListener.listen((data) {
-      //TODO(pquitslund): handle errors.
-      print('>>> ERROR: $data');
-    });
-
-    ReceivePort exitListener = new ReceivePort();
-    exitListener.listen((data) {
-      // Propagate exit code.
-      exit(exitCode);
-    });
+        mainSource)}');
 
     // TODO(pquitslund): update once .packages are supported.
     String packageRoot =
         packageRootPath != null ? packageRootPath : './packages';
     Uri packageUri = new Uri.file(packageRoot);
 
-    // TODO(pquitslund): add .packages support once the VM implements it.
-    Isolate.spawnUri(uri, args, null /* msg */,
-        packageRoot: packageUri,
-        onError: errorListener.sendPort,
-        onExit: exitListener.sendPort);
-
-    // TODO(pquitslund): consider starting paused
-    // http://stackoverflow.com/questions/29247374/what-is-the-best-way-to-track-the-state-of-an-isolate-in-dart
+    Isolate.spawnUri(uri, args, null /* msg */, packageRoot: packageUri);
   }
 }
