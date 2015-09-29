@@ -8,6 +8,7 @@ library analyzer_cli.test.driver;
 import 'dart:io';
 
 import 'package:analyzer/plugin/options.dart';
+import 'package:analyzer/src/plugin/plugin_configuration.dart';
 import 'package:analyzer_cli/src/bootloader.dart';
 import 'package:analyzer_cli/src/driver.dart';
 import 'package:linter/src/plugin/linter_plugin.dart';
@@ -151,6 +152,28 @@ main() {}
         var plugins = image.config.plugins;
         expect(plugins, hasLength(1));
         expect(plugins.first.name, equals('my_plugin1'));
+      });
+      group('plugin validation', () {
+        test('requires class name', () {
+          expect(
+              validate(new PluginInfo(
+                  name: 'test_plugin', libraryUri: 'my_package/foo.dart')),
+              isNotNull);
+        });
+        test('requires library URI', () {
+          expect(
+              validate(
+                  new PluginInfo(name: 'test_plugin', className: 'MyPlugin')),
+              isNotNull);
+        });
+        test('check', () {
+          expect(
+              validate(new PluginInfo(
+                  name: 'test_plugin',
+                  className: 'MyPlugin',
+                  libraryUri: 'my_package/foo.dart')),
+              isNull);
+        });
       });
     });
   });

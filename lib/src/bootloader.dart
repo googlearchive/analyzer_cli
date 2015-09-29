@@ -17,13 +17,43 @@ import 'package:yaml/src/yaml_node.dart';
 
 const _analyzerPackageName = 'analyzer';
 
+/// Return non-null if there is a validation issue with this plugin.
+String validate(PluginInfo plugin) {
+  var missing = <String>[];
+  if (plugin.className == null) {
+    missing.add('class name');
+  }
+  if (plugin.libraryUri == null) {
+    missing.add('library uri');
+  }
+  if (missing.isEmpty) {
+    // All good.
+    return null;
+  }
+
+  return 'Plugin ${plugin.name} skipped, config missing: ${missing.join(", ")}';
+}
+
+List<PluginInfo> _validate(Iterable<PluginInfo> plugins) {
+  List<PluginInfo> validated = <PluginInfo>[];
+  plugins.forEach((PluginInfo plugin) {
+    String validation = validate(plugin);
+    if (validation != null) {
+      errorSink.writeln(validation);
+    } else {
+      validated.add(plugin);
+    }
+  });
+  return validated;
+}
+
 /// Source code assembler.
 class Assembler {
-  /// Plugin configuration info.
-  final PluginConfig _config;
+  /// Plugins to configure.
+  final Iterable<PluginInfo> plugins;
 
   /// Create an assembler for the given plugin [config].
-  Assembler(this._config);
+  Assembler(this.plugins);
 
   /// A string enumerating required package `import`s.
   String get enumerateImports =>
@@ -32,9 +62,6 @@ class Assembler {
   /// A string listing initialized plugin instances.
   String get pluginList =>
       plugins.map((PluginInfo p) => 'new ${p.className}()').join(', ');
-
-  /// Plugins to configure.
-  List<PluginInfo> get plugins => _config.plugins;
 
   /// Create a file containing a `main()` suitable for loading in spawned
   /// isolate.
@@ -140,7 +167,9 @@ class Image {
   /// to include the appropriate analyzer plugins as specified in
   /// `.analyzer_options` which is then run in a spawned isolate.
   void load() {
-    String mainSource = new Assembler(config).createMain();
+    List<PluginInfo> plugins = _validate(config.plugins);
+
+    String mainSource = new Assembler(plugins).createMain();
 
     Uri uri =
         Uri.parse('data:application/dart;charset=utf-8,${Uri.encodeComponent(
