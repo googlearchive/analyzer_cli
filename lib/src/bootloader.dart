@@ -4,6 +4,7 @@
 
 library analyzer_cli.src.bootloader;
 
+import 'dart:async';
 import 'dart:isolate';
 
 import 'package:analyzer/file_system/physical_file_system.dart';
@@ -149,7 +150,7 @@ class Image {
   /// (Optional) package map.
   final Map<String, Uri> packages;
 
-  /// Args to be passed on to the loaded main.
+  /// (Optional) args to be passed on to the loaded main.
   final List<String> args;
 
   /// Plugin configuration.
@@ -164,9 +165,16 @@ class Image {
   /// Loading an image consists in assembling an analyzer `main()`, configured
   /// to include the appropriate analyzer plugins as specified in
   /// `.analyzer_options` which is then run in a spawned isolate.
-  void load() {
+  Future load() {
     List<PluginInfo> plugins = _validate(config.plugins);
     String mainSource = new Assembler(plugins).createMain();
+
+    Completer completer = new Completer();
+    ReceivePort exitListener = new ReceivePort();
+    exitListener.listen((data) {
+      completer.complete();
+      exitListener.close();
+    });
 
     Uri uri =
         Uri.parse('data:application/dart;charset=utf-8,${Uri.encodeComponent(
@@ -177,6 +185,9 @@ class Image {
         packageRootPath != null ? packageRootPath : './packages';
     Uri packageUri = new Uri.file(packageRoot);
 
-    Isolate.spawnUri(uri, args, null /* msg */, packageRoot: packageUri);
+    Isolate.spawnUri(uri, args, null /* msg */,
+        packageRoot: packageUri, onExit: exitListener.sendPort);
+
+    return completer.future;
   }
 }
