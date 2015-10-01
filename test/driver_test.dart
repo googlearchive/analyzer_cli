@@ -35,21 +35,37 @@ main() {
     });
 
     group('linter', () {
-      test('gets analysis options', () {
-        Driver driver = new Driver();
+      StringSink savedOutSink;
+      Driver driver;
+
+      setUp(() {
+        savedOutSink = outSink;
+        outSink = new StringBuffer();
+
+        driver = new Driver();
         driver.start([
           '--options',
           'test/data/linter_project/.analysis_options',
           '--lints',
           'test/data/linter_project/test_file.dart'
         ]);
+      });
+      tearDown(() {
+        outSink = savedOutSink;
+      });
 
+      test('gets analysis options', () {
         /// Lints should be enabled.
         expect(driver.context.analysisOptions.lint, isTrue);
 
         /// The .analysis_options file only specifies 'camel_case_types'.
         var lintNames = linterPlugin.lintRules.map((r) => r.name);
         expect(lintNames, orderedEquals(['camel_case_types']));
+      });
+
+      test('generates lints', () {
+        expect(outSink.toString(),
+            contains('[lint] Name types using UpperCamelCase.'));
       });
     });
 
@@ -139,8 +155,8 @@ main() {}
         ]);
         expect(
             errorSink.toString(),
-            equals(
-                'Plugin configuration skipped: Unrecognized plugin config format, expected `YamlMap`, got `YamlList` (line 2, column 4)\n'));
+            equals('Plugin configuration skipped: Unrecognized plugin config '
+                'format, expected `YamlMap`, got `YamlList` (line 2, column 4)\n'));
       });
       test('plugin config', () {
         BootLoader loader = new BootLoader();

@@ -368,6 +368,7 @@ class Driver {
         _chooseDietParsingPolicy(options);
     // Create a context using these policies.
     AnalysisContext context = AnalysisEngine.instance.createAnalysisContext();
+
     context.sourceFactory = sourceFactory;
 
     if (options.strongMode) {
@@ -455,10 +456,11 @@ class Driver {
   void _processPlugins() {
     List<Plugin> plugins = <Plugin>[];
     plugins.add(linterPlugin);
-    plugins.addAll(AnalysisEngine.instance.supportedPlugins);
     plugins.addAll(_userDefinedPlugins);
-    ExtensionManager manager = new ExtensionManager();
-    manager.processPlugins(plugins);
+    AnalysisEngine.instance.userDefinedPlugins = plugins;
+
+    // This ensures that AE extension manager processes plugins.
+    AnalysisEngine.instance.taskManager;
   }
 
   /// Analyze a single source.
