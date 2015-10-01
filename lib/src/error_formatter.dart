@@ -31,7 +31,7 @@ class ErrorFormatter {
     LineInfo_Location location = errorToLine[error].getLocation(error.offset);
     int length = error.length;
     ErrorSeverity severity =
-        AnalyzerImpl.computeSeverity(error, options.enableTypeChecks);
+        AnalyzerImpl.computeSeverity(error, options);
     if (options.machineFormat) {
       if (severity == ErrorSeverity.WARNING && options.warningsAreFatal) {
         severity = ErrorSeverity.ERROR;
@@ -80,9 +80,9 @@ class ErrorFormatter {
     errors.sort((AnalysisError error1, AnalysisError error2) {
       // Severity.
       ErrorSeverity severity1 =
-          AnalyzerImpl.computeSeverity(error1, options.enableTypeChecks);
+          AnalyzerImpl.computeSeverity(error1, options);
       ErrorSeverity severity2 =
-          AnalyzerImpl.computeSeverity(error2, options.enableTypeChecks);
+          AnalyzerImpl.computeSeverity(error2, options);
       int compare = severity2.compareTo(severity1);
       if (compare != 0) {
         return compare;
@@ -103,7 +103,7 @@ class ErrorFormatter {
     int lintCount = 0;
     for (AnalysisError error in errors) {
       ErrorSeverity severity =
-          AnalyzerImpl.computeSeverity(error, options.enableTypeChecks);
+          AnalyzerImpl.computeSeverity(error, options);
       if (severity == ErrorSeverity.ERROR) {
         errorCount++;
       } else if (severity == ErrorSeverity.WARNING) {

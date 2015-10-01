@@ -48,6 +48,9 @@ class CommandLineOptions {
   /// errors.
   final bool enableTypeChecks;
 
+  /// Whether to treat hints as fatal
+  final bool hintsAreFatal;
+
   /// Whether to ignore unrecognized flags
   final bool ignoreUnrecognizedFlags;
 
@@ -99,6 +102,7 @@ class CommandLineOptions {
         enableStrictCallChecks = args['enable-strict-call-checks'],
         enableSuperMixins = args['supermixin'],
         enableTypeChecks = args['enable_type_checks'],
+        hintsAreFatal = args['fatal-hints'],
         ignoreUnrecognizedFlags = args['ignore-unrecognized-flags'],
         lints = args['lints'],
         log = args['log'],
@@ -207,6 +211,10 @@ class CommandLineOptions {
           negatable: false)
       ..addFlag('ignore-unrecognized-flags',
           help: 'Ignore unrecognized command line flags.',
+          defaultsTo: false,
+          negatable: false)
+      ..addFlag('fatal-hints',
+          help: 'Treat hints as fatal.',
           defaultsTo: false,
           negatable: false)
       ..addFlag('fatal-warnings',

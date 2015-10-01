@@ -34,6 +34,46 @@ main() {
       });
     });
 
+    group('exit codes', () {
+      int savedExitCode;
+      setUp(() {
+        savedExitCode = exitCode;
+      });
+      tearDown(() {
+        exitCode = savedExitCode;
+      });
+
+      test('fatal hints', () {
+        Driver driver = new Driver();
+        driver.start(['--fatal-hints', 'test/data/file_with_hint.dart']);
+        expect(exitCode, 3);
+      });
+
+      test('not fatal hints', () {
+        Driver driver = new Driver();
+        driver.start(['test/data/file_with_hint.dart']);
+        expect(exitCode, 0);
+      });
+
+      test('fatal errors', () {
+        Driver driver = new Driver();
+        driver.start(['test/data/file_with_error.dart']);
+        expect(exitCode, 3);
+      });
+
+      test('not fatal warnings', () {
+        Driver driver = new Driver();
+        driver.start(['test/data/file_with_warning.dart']);
+        expect(exitCode, 0);
+      });
+
+      test('fatal warnings', () {
+        Driver driver = new Driver();
+        driver.start(['--fatal-warnings', 'test/data/file_with_warning.dart']);
+        expect(exitCode, 3);
+      });
+    });
+
     group('linter', () {
       StringSink savedOutSink;
       Driver driver;

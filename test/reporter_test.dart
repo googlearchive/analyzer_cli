@@ -3,7 +3,6 @@
 // BSD-style license that can be found in the LICENSE file.
 
 @TestOn("vm")
-
 library analyzer_cli.test.formatter;
 
 import 'package:analyzer/analyzer.dart';
@@ -24,6 +23,7 @@ main() {
     when(options.disableHints).thenReturn(true);
     when(options.enableTypeChecks).thenReturn(true);
     when(options.machineFormat).thenReturn(false);
+    when(options.hintsAreFatal).thenReturn(false);
 
     var reporter = new ErrorFormatter(out, options);
 
@@ -31,8 +31,8 @@ main() {
       var error = mockError(ErrorType.SYNTACTIC_ERROR, ErrorSeverity.ERROR);
       reporter.formatErrors([error]);
 
-      expect(out.toString(), equals(
-          '''[error] MSG (/foo/bar/baz.dart, line 3, col 3)
+      expect(out.toString(),
+          equals('''[error] MSG (/foo/bar/baz.dart, line 3, col 3)
 1 error found.
 '''));
     });
@@ -41,8 +41,8 @@ main() {
       var error = mockError(ErrorType.HINT, ErrorSeverity.INFO);
       reporter.formatErrors([error]);
 
-      expect(out.toString(), equals(
-          '''[hint] MSG (/foo/bar/baz.dart, line 3, col 3)
+      expect(out.toString(),
+          equals('''[hint] MSG (/foo/bar/baz.dart, line 3, col 3)
 1 hint found.
 '''));
     });
@@ -50,7 +50,6 @@ main() {
 }
 
 MockAnalysisErrorInfo mockError(ErrorType type, ErrorSeverity severity) {
-
   // ErrorInfo
   var info = new MockAnalysisErrorInfo();
   var error = new MockAnalysisError();

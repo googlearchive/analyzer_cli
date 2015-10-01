@@ -65,7 +65,7 @@ class AnalyzerImpl {
         if (!_isDesiredError(error)) {
           continue;
         }
-        var severity = computeSeverity(error, options.enableTypeChecks);
+        var severity = computeSeverity(error, options);
         status = status.max(severity);
       }
     }
@@ -190,7 +190,7 @@ class AnalyzerImpl {
     if (error.errorCode.type == ErrorType.TODO) {
       return false;
     }
-    if (computeSeverity(error, options.enableTypeChecks) ==
+    if (computeSeverity(error, options) ==
             ErrorSeverity.INFO &&
         options.disableHints) {
       return false;
@@ -242,14 +242,18 @@ class AnalyzerImpl {
     formatter.formatErrors(errorInfos);
   }
 
-  /// Compute the severity of the error; however, if
-  /// [enableTypeChecks] is false, then de-escalate checked-mode compile time
-  /// errors to a severity of [ErrorSeverity.INFO].
+  /// Compute the severity of the error; however:
+  ///   * if [options.enableTypeChecks] is false, then de-escalate checked-mode
+  ///   compile time errors to a severity of [ErrorSeverity.INFO].
+  ///   * if [options.hintsAreFatal] is true, escalate hints to errors.
   static ErrorSeverity computeSeverity(
-      AnalysisError error, bool enableTypeChecks) {
-    if (!enableTypeChecks &&
+    AnalysisError error, CommandLineOptions options) {
+    if (!options.enableTypeChecks &&
         error.errorCode.type == ErrorType.CHECKED_MODE_COMPILE_TIME_ERROR) {
       return ErrorSeverity.INFO;
+    }
+    if (options.hintsAreFatal && error.errorCode is HintCode) {
+      return ErrorSeverity.ERROR;
     }
     return error.errorCode.errorSeverity;
   }
