@@ -8,6 +8,7 @@ library analyzer_cli.test.driver;
 import 'dart:io';
 
 import 'package:analyzer/plugin/options.dart';
+import 'package:analyzer/src/generated/engine.dart';
 import 'package:analyzer/src/plugin/plugin_configuration.dart';
 import 'package:analyzer_cli/src/bootloader.dart';
 import 'package:analyzer_cli/src/driver.dart';
@@ -31,6 +32,27 @@ main() {
         ]);
         expect(processor.options['test_plugin'], isNotNull);
         expect(processor.exception, isNull);
+      });
+    });
+
+    group('experimental flags', () {
+      bool savedTaskModelStatus;
+      setUp(() {
+        savedTaskModelStatus = AnalysisEngine.instance.useTaskModel;
+      });
+      tearDown(() {
+        AnalysisEngine.instance.useTaskModel = savedTaskModelStatus;
+      });
+
+      test('enable tasks', () {
+        expect(AnalysisEngine.instance.useTaskModel, savedTaskModelStatus);
+        Driver driver = new Driver();
+        try {
+          driver.start(['--enable-new-task-model', 'test/data/test_file.dart']);
+        } catch (e) {
+          //TODO(pquitslund): https://github.com/dart-lang/analyzer_cli/issues/65
+        }
+        expect(AnalysisEngine.instance.useTaskModel, true);
       });
     });
 

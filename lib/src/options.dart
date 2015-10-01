@@ -34,6 +34,9 @@ class CommandLineOptions {
   /// Whether to display version information
   final bool displayVersion;
 
+  /// Whether to enable the new task model.
+  final bool enableNewTaskModel;
+
   /// Whether to enable null-aware operators (DEP 9).
   final bool enableNullAwareOperators;
 
@@ -98,6 +101,7 @@ class CommandLineOptions {
         analysisOptionsFile = args['options'],
         disableHints = args['no-hints'],
         displayVersion = args['version'],
+        enableNewTaskModel = args['enable-new-task-model'],
         enableNullAwareOperators = args['enable-null-aware-operators'],
         enableStrictCallChecks = args['enable-strict-call-checks'],
         enableSuperMixins = args['supermixin'],
@@ -214,9 +218,7 @@ class CommandLineOptions {
           defaultsTo: false,
           negatable: false)
       ..addFlag('fatal-hints',
-          help: 'Treat hints as fatal.',
-          defaultsTo: false,
-          negatable: false)
+          help: 'Treat hints as fatal.', defaultsTo: false, negatable: false)
       ..addFlag('fatal-warnings',
           help: 'Treat non-type warnings as fatal.',
           defaultsTo: false,
@@ -268,6 +270,11 @@ class CommandLineOptions {
           hide: true)
       ..addFlag('enable-strict-call-checks',
           help: 'Fix issue 21938.',
+          defaultsTo: false,
+          negatable: false,
+          hide: true)
+      ..addFlag('enable-new-task-model',
+          help: 'Ennable new task model.',
           defaultsTo: false,
           negatable: false,
           hide: true)
