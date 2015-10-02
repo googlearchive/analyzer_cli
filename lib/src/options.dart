@@ -11,11 +11,21 @@ import 'package:cli_util/cli_util.dart' show getSdkDir;
 
 const _binaryName = 'dartanalyzer';
 
+/// Shared exit handler.
+///
+/// *Visible for testing.*
+ExitHandler exitHandler = exit;
+
 /// Print the given message and exit with the given [exitCode]
 void printAndFail(String message, {int exitCode: 15}) {
   print(message);
-  exit(exitCode);
+  exitHandler(exitCode);
 }
+
+/// Exit handler.
+///
+/// *Visible for testing.*
+typedef void ExitHandler(int code);
 
 /// Analyzer commandline configuration options.
 class CommandLineOptions {

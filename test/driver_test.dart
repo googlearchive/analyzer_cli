@@ -12,6 +12,7 @@ import 'package:analyzer/src/generated/engine.dart';
 import 'package:analyzer/src/plugin/plugin_configuration.dart';
 import 'package:analyzer_cli/src/bootloader.dart';
 import 'package:analyzer_cli/src/driver.dart';
+import 'package:analyzer_cli/src/options.dart';
 import 'package:linter/src/plugin/linter_plugin.dart';
 import 'package:path/path.dart' as path;
 import 'package:plugin/plugin.dart';
@@ -59,11 +60,15 @@ main() {
 
     group('exit codes', () {
       int savedExitCode;
+      ExitHandler savedExitHandler;
       setUp(() {
         savedExitCode = exitCode;
+        savedExitHandler = exitHandler;
+        exitHandler = (code) => exitCode = code;
       });
       tearDown(() {
         exitCode = savedExitCode;
+        exitHandler = savedExitHandler;
       });
 
       test('fatal hints', () {
