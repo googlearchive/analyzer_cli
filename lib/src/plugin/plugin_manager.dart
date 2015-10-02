@@ -72,43 +72,36 @@ class PluginManager {
 
   /// Return [PluginDetails] derived from associated plugin manifests
   /// corresponding to plugins specified in the given [config].
-  List<PluginDetails> getPluginDetails(PluginConfig config) {
-    List<PluginDetails> plugins = <PluginDetails>[];
-    config.plugins.forEach((PluginInfo localConfig) {
-      PluginManifest manifest = findManifest(localConfig.name);
-      plugins.add(_getDetails(localConfig, manifest));
-    });
-
-    return plugins;
-  }
+  Iterable<PluginDetails> getPluginDetails(PluginConfig config) =>
+      config.plugins.map((PluginInfo localConfig) {
+        PluginManifest manifest = findManifest(localConfig.name);
+        return _getDetails(localConfig, manifest);
+      });
 
   String _findAndReadManifestAtUri(Uri uri) {
     File manifestFile = _findManifest(uri);
-    if (manifestFile == null) {
-      return null;
-    }
-    return manifestFile.readAsStringSync();
+    return manifestFile?.readAsStringSync();
   }
 
   File _findManifest(Uri uri) {
-    if (uri != null) {
-      Directory directory = new Directory.fromUri(uri);
-      File file = new File(path.join(directory.path, _manifestFileName));
-      if (file.existsSync()) {
-        return file;
-      }
+    if (uri == null) {
+      return null;
     }
-    return null;
+
+    Directory directory = new Directory.fromUri(uri);
+    File file = new File(path.join(directory.path, _manifestFileName));
+
+    return file.existsSync() ? file : null;
   }
 
   PluginDetails _getDetails(PluginInfo localConfig, PluginManifest manifest) {
     if (manifest == null) {
       return new PluginDetails.notFound(localConfig);
-    } else {
-      if (!manifest.contributesTo.contains(hostPackage)) {
-        return new PluginDetails.notApplicable(localConfig);
-      }
     }
+    if (!manifest.contributesTo.contains(hostPackage)) {
+      return new PluginDetails.notApplicable(localConfig);
+    }
+
     return new PluginDetails(combine(localConfig, manifest.plugin));
   }
 }

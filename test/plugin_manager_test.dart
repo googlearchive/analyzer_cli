@@ -72,7 +72,7 @@ contributes_to: analyzer
       PluginConfig localConfig =
           new PluginConfig([notFound, applicable, notApplicable]);
 
-      List<PluginDetails> details = pm.getPluginDetails(localConfig);
+      Iterable<PluginDetails> details = pm.getPluginDetails(localConfig);
       expect(details, hasLength(3));
 
       List<PluginDetails> plugins = sortByName(details);
@@ -89,5 +89,6 @@ contributes_to: analyzer
   });
 }
 
-List<PluginDetails> sortByName(List<PluginDetails> details) =>
-    details..sort((p1, p2) => p1.plugin.name.compareTo(p2.plugin.name));
+List<PluginDetails> sortByName(Iterable<PluginDetails> details) =>
+    details.toList()
+      ..sort((p1, p2) => p1.plugin.name.compareTo(p2.plugin.name));

@@ -34,11 +34,11 @@ import 'package:package_config/packages.dart' show Packages;
 import 'package:package_config/packages_file.dart' as pkgfile show parse;
 import 'package:package_config/src/packages_impl.dart' show MapPackages;
 import 'package:path/path.dart' as path;
-import 'package:plugin/manager.dart';
 import 'package:plugin/plugin.dart';
 import 'package:yaml/yaml.dart';
 
-/// The maximum number of sources for which AST structures should be kept in the cache.
+/// The maximum number of sources for which AST structures should be kept in the
+/// cache.
 const int _maxCacheSize = 512;
 
 /// Shared IO sink for standard error reporting.
@@ -107,7 +107,7 @@ class Driver {
       });
     } else {
       ErrorSeverity severity = _analyzeAll(options);
-      // In case of error propogate exit code.
+      // In case of error propagate exit code.
       if (severity == ErrorSeverity.ERROR) {
         exitCode = severity.ordinal;
       }

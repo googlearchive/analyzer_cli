@@ -40,6 +40,7 @@ main() {
       setUp(() {
         savedTaskModelStatus = AnalysisEngine.instance.useTaskModel;
       });
+
       tearDown(() {
         AnalysisEngine.instance.useTaskModel = savedTaskModelStatus;
       });
@@ -50,7 +51,7 @@ main() {
         try {
           driver.start(['--enable-new-task-model', 'test/data/test_file.dart']);
         } catch (e) {
-          //TODO(pquitslund): https://github.com/dart-lang/analyzer_cli/issues/65
+          //TODO(pq): https://github.com/dart-lang/analyzer_cli/issues/65
         }
         expect(AnalysisEngine.instance.useTaskModel, true);
       });
@@ -218,7 +219,8 @@ main() {}
         expect(
             errorSink.toString(),
             equals('Plugin configuration skipped: Unrecognized plugin config '
-                'format, expected `YamlMap`, got `YamlList` (line 2, column 4)\n'));
+                'format, expected `YamlMap`, got `YamlList` '
+                '(line 2, column 4)\n'));
       });
       test('plugin config', () {
         BootLoader loader = new BootLoader();
