@@ -95,6 +95,22 @@ main() {
         driver.start(['--fatal-warnings', 'test/data/file_with_warning.dart']);
         expect(exitCode, 3);
       });
+
+      test('missing options file', () {
+        Driver driver = new Driver();
+        driver.start([
+          '--options',
+          'test/data/NO_OPTIONS_HERE',
+          'test/data/test_file.dart'
+        ]);
+        expect(exitCode, 3);
+      });
+
+      test('missing dart file', () {
+        Driver driver = new Driver();
+        driver.start(['test/data/NO_DART_FILE_HERE.dart']);
+        expect(exitCode, 3);
+      });
     });
 
     group('linter', () {

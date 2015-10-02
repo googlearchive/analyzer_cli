@@ -420,6 +420,22 @@ class Driver {
     return null;
   }
 
+  fileSystem.File _getOptionsFile(CommandLineOptions options) {
+    fileSystem.File file;
+    String filePath = options.analysisOptionsFile;
+    if (filePath != null) {
+      file = PhysicalResourceProvider.INSTANCE.getFile(filePath);
+      if (!file.exists) {
+        printAndFail('Options file not found: $filePath',
+            exitCode: ErrorSeverity.ERROR.ordinal);
+      }
+    } else {
+      filePath = AnalysisOptionsProvider.ANALYSIS_OPTIONS_NAME;
+      file = PhysicalResourceProvider.INSTANCE.getFile(filePath);
+    }
+    return file;
+  }
+
   Map<String, List<fileSystem.Folder>> _getPackageMap(Packages packages) {
     if (packages == null) {
       return null;
@@ -436,14 +452,11 @@ class Driver {
   }
 
   void _processAnalysisOptions(CommandLineOptions options) {
-    // Determine options file path.
-    var filePath = options.analysisOptionsFile != null
-        ? options.analysisOptionsFile
-        : AnalysisOptionsProvider.ANALYSIS_OPTIONS_NAME;
+    fileSystem.File file = _getOptionsFile(options);
+
     List<OptionsProcessor> optionsProcessors =
         AnalysisEngine.instance.optionsPlugin.optionsProcessors;
     try {
-      var file = PhysicalResourceProvider.INSTANCE.getFile(filePath);
       AnalysisOptionsProvider analysisOptionsProvider =
           new AnalysisOptionsProvider();
       Map<String, YamlNode> options =
