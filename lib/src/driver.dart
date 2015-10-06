@@ -197,6 +197,9 @@ class Driver {
     if (options.enableSuperMixins != _previousOptions.enableSuperMixins) {
       return false;
     }
+    if (options.disableNewTaskModel != _previousOptions.disableNewTaskModel) {
+      return false;
+    }
     return true;
   }
 
@@ -355,6 +358,16 @@ class Driver {
       return;
     }
     _previousOptions = options;
+    // Determine whether the new task model should be used.  Note that strong
+    // mode currently requires the old task model, so we need to account for
+    // that.
+    // TODO(paulberry): simplify this logic when strong mode supports the new
+    // task model.
+    if (options.strongMode || options.disableNewTaskModel) {
+      AnalysisEngine.instance.useTaskModel = false;
+    } else {
+      AnalysisEngine.instance.useTaskModel = true;
+    }
     // Choose a package resolution policy and a diet parsing policy based on
     // the command-line options.
     SourceFactory sourceFactory =
