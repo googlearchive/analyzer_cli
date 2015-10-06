@@ -91,8 +91,6 @@ class Driver {
     // Parse commandline options.
     CommandLineOptions options = CommandLineOptions.parse(args);
 
-    AnalysisEngine.instance.useTaskModel = options.enableNewTaskModel;
-
     // Cache options of interest to inform analysis.
     _setupEnv(options);
 

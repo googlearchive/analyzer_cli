@@ -20,7 +20,6 @@ main() {
         expect(options.disableHints, isFalse);
         expect(options.lints, isFalse);
         expect(options.displayVersion, isFalse);
-        expect(options.enableNewTaskModel, isFalse);
         expect(options.enableStrictCallChecks, isFalse);
         expect(options.enableSuperMixins, isFalse);
         expect(options.enableTypeChecks, isFalse);
@@ -48,12 +47,6 @@ main() {
             .parse(['--dart-sdk', '.', '-Dfoo=bar', 'foo.dart']);
         expect(options.definedVariables['foo'], equals('bar'));
         expect(options.definedVariables['bar'], isNull);
-      });
-
-      test('enable new task model', () {
-        CommandLineOptions options = CommandLineOptions
-            .parse(['--dart-sdk', '.', '--enable-new-task-model', 'foo.dart']);
-        expect(options.enableNewTaskModel, isTrue);
       });
 
       test('enable strict call checks', () {
