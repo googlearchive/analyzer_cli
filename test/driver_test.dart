@@ -3,13 +3,16 @@
 // BSD-style license that can be found in the LICENSE file.
 
 @TestOn("vm")
-
 library analyzer_cli.test.driver;
 
 import 'dart:io';
 
 import 'package:analyzer/plugin/options.dart';
+import 'package:analyzer/src/plugin/plugin_configuration.dart';
+import 'package:analyzer_cli/src/bootloader.dart';
 import 'package:analyzer_cli/src/driver.dart';
+import 'package:analyzer_cli/src/options.dart';
+import 'package:linter/src/plugin/linter_plugin.dart';
 import 'package:path/path.dart' as path;
 import 'package:plugin/plugin.dart';
 import 'package:test/test.dart';
@@ -18,7 +21,7 @@ import 'package:yaml/src/yaml_node.dart';
 main() {
   group('Driver', () {
     group('options', () {
-      test('processing', () {
+      test('custom processor', () {
         Driver driver = new Driver();
         TestProcessor processor = new TestProcessor();
         driver.userDefinedPlugins = [new TestPlugin(processor)];
@@ -29,6 +32,101 @@ main() {
         ]);
         expect(processor.options['test_plugin'], isNotNull);
         expect(processor.exception, isNull);
+      });
+    });
+
+    group('exit codes', () {
+      int savedExitCode;
+      ExitHandler savedExitHandler;
+      setUp(() {
+        savedExitCode = exitCode;
+        savedExitHandler = exitHandler;
+        exitHandler = (code) => exitCode = code;
+      });
+      tearDown(() {
+        exitCode = savedExitCode;
+        exitHandler = savedExitHandler;
+      });
+
+      test('fatal hints', () {
+        Driver driver = new Driver();
+        driver.start(['--fatal-hints', 'test/data/file_with_hint.dart']);
+        expect(exitCode, 3);
+      });
+
+      test('not fatal hints', () {
+        Driver driver = new Driver();
+        driver.start(['test/data/file_with_hint.dart']);
+        expect(exitCode, 0);
+      });
+
+      test('fatal errors', () {
+        Driver driver = new Driver();
+        driver.start(['test/data/file_with_error.dart']);
+        expect(exitCode, 3);
+      });
+
+      test('not fatal warnings', () {
+        Driver driver = new Driver();
+        driver.start(['test/data/file_with_warning.dart']);
+        expect(exitCode, 0);
+      });
+
+      test('fatal warnings', () {
+        Driver driver = new Driver();
+        driver.start(['--fatal-warnings', 'test/data/file_with_warning.dart']);
+        expect(exitCode, 3);
+      });
+
+      test('missing options file', () {
+        Driver driver = new Driver();
+        driver.start([
+          '--options',
+          'test/data/NO_OPTIONS_HERE',
+          'test/data/test_file.dart'
+        ]);
+        expect(exitCode, 3);
+      });
+
+      test('missing dart file', () {
+        Driver driver = new Driver();
+        driver.start(['test/data/NO_DART_FILE_HERE.dart']);
+        expect(exitCode, 3);
+      });
+    });
+
+    group('linter', () {
+      StringSink savedOutSink;
+      Driver driver;
+
+      setUp(() {
+        savedOutSink = outSink;
+        outSink = new StringBuffer();
+
+        driver = new Driver();
+        driver.start([
+          '--options',
+          'test/data/linter_project/.analysis_options',
+          '--lints',
+          'test/data/linter_project/test_file.dart'
+        ]);
+      });
+      tearDown(() {
+        outSink = savedOutSink;
+      });
+
+      test('gets analysis options', () {
+        /// Lints should be enabled.
+        expect(driver.context.analysisOptions.lint, isTrue);
+
+        /// The .analysis_options file only specifies 'camel_case_types'.
+        var lintNames = linterPlugin.lintRules.map((r) => r.name);
+        expect(lintNames, orderedEquals(['camel_case_types']));
+      });
+
+      test('generates lints', () {
+        expect(outSink.toString(),
+            contains('[lint] Name types using UpperCamelCase.'));
       });
     });
 
@@ -86,6 +184,74 @@ main() {}
         expect(stdout, contains('[error] Target of URI does not exist'));
         expect(stdout, contains('1 error found.'));
         expect(errorSink.toString(), '');
+      });
+
+      test('bad package root', () {
+        new Driver().start(['--package-root', 'does/not/exist', 'test.dart']);
+        String stdout = outSink.toString();
+        expect(exitCode, 3);
+        expect(
+            stdout,
+            contains(
+                'Package root directory (does/not/exist) does not exist.'));
+      });
+    });
+  });
+  group('Bootloader', () {
+    group('plugin processing', () {
+      StringSink savedErrorSink;
+      setUp(() {
+        savedErrorSink = errorSink;
+        errorSink = new StringBuffer();
+      });
+      tearDown(() {
+        errorSink = savedErrorSink;
+      });
+      test('bad format', () {
+        BootLoader loader = new BootLoader();
+        loader.createImage([
+          '--options',
+          'test/data/bad_plugin_options.yaml',
+          'test/data/test_file.dart'
+        ]);
+        expect(
+            errorSink.toString(),
+            equals('Plugin configuration skipped: Unrecognized plugin config '
+                'format, expected `YamlMap`, got `YamlList` '
+                '(line 2, column 4)\n'));
+      });
+      test('plugin config', () {
+        BootLoader loader = new BootLoader();
+        Image image = loader.createImage([
+          '--options',
+          'test/data/plugin_options.yaml',
+          'test/data/test_file.dart'
+        ]);
+        var plugins = image.config.plugins;
+        expect(plugins, hasLength(1));
+        expect(plugins.first.name, equals('my_plugin1'));
+      });
+      group('plugin validation', () {
+        test('requires class name', () {
+          expect(
+              validate(new PluginInfo(
+                  name: 'test_plugin', libraryUri: 'my_package/foo.dart')),
+              isNotNull);
+        });
+        test('requires library URI', () {
+          expect(
+              validate(
+                  new PluginInfo(name: 'test_plugin', className: 'MyPlugin')),
+              isNotNull);
+        });
+        test('check', () {
+          expect(
+              validate(new PluginInfo(
+                  name: 'test_plugin',
+                  className: 'MyPlugin',
+                  libraryUri: 'my_package/foo.dart')),
+              isNull);
+        });
       });
     });
   });

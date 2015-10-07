@@ -34,9 +34,12 @@ import 'package:package_config/packages.dart' show Packages;
 import 'package:package_config/packages_file.dart' as pkgfile show parse;
 import 'package:package_config/src/packages_impl.dart' show MapPackages;
 import 'package:path/path.dart' as path;
-import 'package:plugin/manager.dart';
 import 'package:plugin/plugin.dart';
 import 'package:yaml/yaml.dart';
+
+/// The maximum number of sources for which AST structures should be kept in the
+/// cache.
+const int _maxCacheSize = 512;
 
 /// Shared IO sink for standard error reporting.
 ///
@@ -47,9 +50,6 @@ StringSink errorSink = stderr;
 ///
 /// *Visible for testing.*
 StringSink outSink = stdout;
-
-/// The maximum number of sources for which AST structures should be kept in the cache.
-const int _maxCacheSize = 512;
 
 typedef ErrorSeverity _BatchRunnerHandler(List<String> args);
 
@@ -71,6 +71,11 @@ class Driver {
   /// If [_context] is not `null`, the [CommandLineOptions] that guided its
   /// creation.
   CommandLineOptions _previousOptions;
+
+  /// This Driver's current analysis context.
+  ///
+  /// *Visible for testing.*
+  AnalysisContext get context => _context;
 
   /// Set the [plugins] that are defined outside the `analyzer_cli` package.
   void set userDefinedPlugins(List<Plugin> plugins) {
@@ -99,7 +104,11 @@ class Driver {
         return _analyzeAll(options);
       });
     } else {
-      _analyzeAll(options);
+      ErrorSeverity severity = _analyzeAll(options);
+      // In case of error propagate exit code.
+      if (severity == ErrorSeverity.ERROR) {
+        exitCode = severity.ordinal;
+      }
     }
   }
 
@@ -110,7 +119,12 @@ class Driver {
     }
 
     // Create a context, or re-use the previous one.
-    _createAnalysisContext(options);
+    try {
+      _createAnalysisContext(options);
+    } on _DriverError catch (error) {
+      outSink.writeln(error.msg);
+      return ErrorSeverity.ERROR;
+    }
 
     // Add all the files to be analyzed en masse to the context.  Skip any
     // files that were added earlier (whether explicitly or implicitly) to
@@ -162,10 +176,6 @@ class Driver {
       return false;
     }
     if (options.packageConfigPath != _previousOptions.packageConfigPath) {
-      return false;
-    }
-    if (!_equalMaps(
-        options.customUrlMappings, _previousOptions.customUrlMappings)) {
       return false;
     }
     if (!_equalMaps(
@@ -255,8 +265,7 @@ class Driver {
   /// Decide on the appropriate method for resolving URIs based on the given
   /// [options] and [customUrlMappings] settings, and return a
   /// [SourceFactory] that has been configured accordingly.
-  SourceFactory _chooseUriResolutionPolicy(
-      CommandLineOptions options, Map<String, String> customUrlMappings) {
+  SourceFactory _chooseUriResolutionPolicy(CommandLineOptions options) {
     Packages packages;
     Map<String, List<fileSystem.Folder>> packageMap;
     UriResolver packageUriResolver;
@@ -311,11 +320,8 @@ class Driver {
 
     // Now, build our resolver list.
 
-    // Custom and 'dart:' URIs come first.
-    List<UriResolver> resolvers = [
-      new CustomUriResolver(customUrlMappings),
-      new DartUriResolver(sdk)
-    ];
+    // 'dart:' URIs come first.
+    List<UriResolver> resolvers = [new DartUriResolver(sdk)];
 
     // Next SdkExts.
     if (packageMap != null) {
@@ -370,12 +376,12 @@ class Driver {
     }
     // Choose a package resolution policy and a diet parsing policy based on
     // the command-line options.
-    SourceFactory sourceFactory =
-        _chooseUriResolutionPolicy(options, options.customUrlMappings);
+    SourceFactory sourceFactory = _chooseUriResolutionPolicy(options);
     AnalyzeFunctionBodiesPredicate dietParsingPolicy =
         _chooseDietParsingPolicy(options);
     // Create a context using these policies.
     AnalysisContext context = AnalysisEngine.instance.createAnalysisContext();
+
     context.sourceFactory = sourceFactory;
 
     if (options.strongMode) {
@@ -425,6 +431,22 @@ class Driver {
     return null;
   }
 
+  fileSystem.File _getOptionsFile(CommandLineOptions options) {
+    fileSystem.File file;
+    String filePath = options.analysisOptionsFile;
+    if (filePath != null) {
+      file = PhysicalResourceProvider.INSTANCE.getFile(filePath);
+      if (!file.exists) {
+        printAndFail('Options file not found: $filePath',
+            exitCode: ErrorSeverity.ERROR.ordinal);
+      }
+    } else {
+      filePath = AnalysisOptionsProvider.ANALYSIS_OPTIONS_NAME;
+      file = PhysicalResourceProvider.INSTANCE.getFile(filePath);
+    }
+    return file;
+  }
+
   Map<String, List<fileSystem.Folder>> _getPackageMap(Packages packages) {
     if (packages == null) {
       return null;
@@ -441,14 +463,11 @@ class Driver {
   }
 
   void _processAnalysisOptions(CommandLineOptions options) {
-    // Determine options file path.
-    var filePath = options.analysisOptionsFile != null
-        ? options.analysisOptionsFile
-        : AnalysisOptionsProvider.ANALYSIS_OPTIONS_NAME;
+    fileSystem.File file = _getOptionsFile(options);
+
     List<OptionsProcessor> optionsProcessors =
         AnalysisEngine.instance.optionsPlugin.optionsProcessors;
     try {
-      var file = PhysicalResourceProvider.INSTANCE.getFile(filePath);
       AnalysisOptionsProvider analysisOptionsProvider =
           new AnalysisOptionsProvider();
       Map<String, YamlNode> options =
@@ -463,10 +482,11 @@ class Driver {
   void _processPlugins() {
     List<Plugin> plugins = <Plugin>[];
     plugins.add(linterPlugin);
-    plugins.addAll(AnalysisEngine.instance.supportedPlugins);
     plugins.addAll(_userDefinedPlugins);
-    ExtensionManager manager = new ExtensionManager();
-    manager.processPlugins(plugins);
+    AnalysisEngine.instance.userDefinedPlugins = plugins;
+
+    // This ensures that AE extension manager processes plugins.
+    AnalysisEngine.instance.taskManager;
   }
 
   /// Analyze a single source.
@@ -571,6 +591,11 @@ class _BatchRunner {
   }
 }
 
+class _DriverError implements Exception {
+  String msg;
+  _DriverError(this.msg);
+}
+
 /// [SdkExtUriResolver] needs a Map from package name to folder. In the case
 /// that the analyzer is invoked with a --package-root option, we need to
 /// manually create this mapping. Given [packageRootPath],
@@ -580,6 +605,10 @@ class _PackageRootPackageMapBuilder {
   static Map<String, List<fileSystem.Folder>> buildPackageMap(
       String packageRootPath) {
     var packageRoot = new Directory(packageRootPath);
+    if (!packageRoot.existsSync()) {
+      throw new _DriverError(
+          'Package root directory ($packageRootPath) does not exist.');
+    }
     var packages = packageRoot.listSync(followLinks: false);
     var result = new Map<String, List<fileSystem.Folder>>();
     for (var package in packages) {

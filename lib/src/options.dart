@@ -11,15 +11,24 @@ import 'package:cli_util/cli_util.dart' show getSdkDir;
 
 const _binaryName = 'dartanalyzer';
 
+/// Shared exit handler.
+///
+/// *Visible for testing.*
+ExitHandler exitHandler = exit;
+
 /// Print the given message and exit with the given [exitCode]
 void printAndFail(String message, {int exitCode: 15}) {
   print(message);
-  exit(exitCode);
+  exitHandler(exitCode);
 }
+
+/// Exit handler.
+///
+/// *Visible for testing.*
+typedef void ExitHandler(int code);
 
 /// Analyzer commandline configuration options.
 class CommandLineOptions {
-
   /// The path to an analysis options file
   final String analysisOptionsFile;
 
@@ -51,6 +60,9 @@ class CommandLineOptions {
   /// Whether to treat type mismatches found during constant evaluation as
   /// errors.
   final bool enableTypeChecks;
+
+  /// Whether to treat hints as fatal
+  final bool hintsAreFatal;
 
   /// Whether to ignore unrecognized flags
   final bool ignoreUnrecognizedFlags;
@@ -85,10 +97,6 @@ class CommandLineOptions {
   /// Whether to treat warnings as fatal
   final bool warningsAreFatal;
 
-  /// A table mapping library URIs to the file system path where the library
-  /// source is located.
-  final Map<String, String> customUrlMappings;
-
   /// Whether to use package:dev_compiler for strong static checking.
   final bool strongMode;
 
@@ -96,9 +104,8 @@ class CommandLineOptions {
   final bool strongHints;
 
   /// Initialize options from the given parsed [args].
-  CommandLineOptions._fromArgs(ArgResults args,
-      Map<String, String> definedVariables,
-      Map<String, String> customUrlMappings)
+  CommandLineOptions._fromArgs(
+      ArgResults args, Map<String, String> definedVariables)
       : dartSdkPath = args['dart-sdk'],
         this.definedVariables = definedVariables,
         analysisOptionsFile = args['options'],
@@ -109,6 +116,7 @@ class CommandLineOptions {
         enableStrictCallChecks = args['enable-strict-call-checks'],
         enableSuperMixins = args['supermixin'],
         enableTypeChecks = args['enable_type_checks'],
+        hintsAreFatal = args['fatal-hints'],
         ignoreUnrecognizedFlags = args['ignore-unrecognized-flags'],
         lints = args['lints'],
         log = args['log'],
@@ -116,12 +124,11 @@ class CommandLineOptions {
         packageConfigPath = args['packages'],
         packageRootPath = args['package-root'],
         shouldBatch = args['batch'],
-        showPackageWarnings = args['show-package-warnings'] ||
-            args['package-warnings'],
+        showPackageWarnings =
+            args['show-package-warnings'] || args['package-warnings'],
         showSdkWarnings = args['show-sdk-warnings'] || args['warnings'],
         sourceFiles = args.rest,
         warningsAreFatal = args['fatal-warnings'],
-        this.customUrlMappings = customUrlMappings,
         strongMode = args['strong'],
         strongHints = args['strong-hints'];
 
@@ -193,10 +200,12 @@ class CommandLineOptions {
           negatable: false)
       ..addOption('dart-sdk', help: 'The path to the Dart SDK.')
       ..addOption('packages',
-          help: 'Path to the package resolution configuration file, which supplies a mapping of package names to paths.  This option cannot be used with --package-root.')
+          help:
+              'Path to the package resolution configuration file, which supplies a mapping of package names to paths.  This option cannot be used with --package-root.')
       ..addOption('package-root',
           abbr: 'p',
-          help: 'Path to a package root directory (deprecated). This option cannot be used with --packages.')
+          help:
+              'Path to a package root directory (deprecated). This option cannot be used with --packages.')
       ..addOption('options', help: 'Path to an analysis options file.')
       ..addOption('format',
           help: 'Specifies the format in which errors are displayed.')
@@ -218,6 +227,8 @@ class CommandLineOptions {
           help: 'Ignore unrecognized command line flags.',
           defaultsTo: false,
           negatable: false)
+      ..addFlag('fatal-hints',
+          help: 'Treat hints as fatal.', defaultsTo: false, negatable: false)
       ..addFlag('fatal-warnings',
           help: 'Treat non-type warnings as fatal.',
           defaultsTo: false,
@@ -245,7 +256,8 @@ class CommandLineOptions {
           negatable: false)
       ..addOption('url-mapping',
           help: '--url-mapping=libraryUri,/path/to/library.dart directs the '
-          'analyzer to use "library.dart" as the source for an import ' 'of "libraryUri".',
+              'analyzer to use "library.dart" as the source for an import '
+              'of "libraryUri".',
           allowMultiple: true,
           splitCommas: false)
       //
@@ -273,6 +285,11 @@ class CommandLineOptions {
           hide: true)
       ..addFlag('enable-strict-call-checks',
           help: 'Fix issue 21938.',
+          defaultsTo: false,
+          negatable: false,
+          hide: true)
+      ..addFlag('enable-new-task-model',
+          help: 'Ennable new task model.',
           defaultsTo: false,
           negatable: false,
           hide: true)
@@ -323,17 +340,7 @@ class CommandLineOptions {
           exit(15);
         }
       }
-      Map<String, String> customUrlMappings = <String, String>{};
-      for (String mapping in results['url-mapping']) {
-        List<String> splitMapping = mapping.split(',');
-        if (splitMapping.length != 2) {
-          _showUsage(parser);
-          exit(15);
-        }
-        customUrlMappings[splitMapping[0]] = splitMapping[1];
-      }
-      return new CommandLineOptions._fromArgs(
-          results, definedVariables, customUrlMappings);
+      return new CommandLineOptions._fromArgs(results, definedVariables);
     } on FormatException catch (e) {
       print(e.message);
       _showUsage(parser);
@@ -369,8 +376,13 @@ class CommandLineParser {
 
   /// Defines a flag.
   /// See [ArgParser.addFlag()].
-  void addFlag(String name, {String abbr, String help, bool defaultsTo: false,
-      bool negatable: true, void callback(bool value), bool hide: false}) {
+  void addFlag(String name,
+      {String abbr,
+      String help,
+      bool defaultsTo: false,
+      bool negatable: true,
+      void callback(bool value),
+      bool hide: false}) {
     _knownFlags.add(name);
     _parser.addFlag(name,
         abbr: abbr,
@@ -383,9 +395,15 @@ class CommandLineParser {
 
   /// Defines a value-taking option.
   /// See [ArgParser.addOption()].
-  void addOption(String name, {String abbr, String help, List<String> allowed,
-      Map<String, String> allowedHelp, String defaultsTo, void callback(value),
-      bool allowMultiple: false, bool splitCommas}) {
+  void addOption(String name,
+      {String abbr,
+      String help,
+      List<String> allowed,
+      Map<String, String> allowedHelp,
+      String defaultsTo,
+      void callback(value),
+      bool allowMultiple: false,
+      bool splitCommas}) {
     _knownFlags.add(name);
     _parser.addOption(name,
         abbr: abbr,
@@ -406,9 +424,9 @@ class CommandLineParser {
   /// flags and options defined by this parser, and returns the result. The
   /// values of any defined variables are captured in the given map.
   /// See [ArgParser].
-  ArgResults parse(
-      List<String> args, Map<String, String> definedVariables) => _parser
-      .parse(_filterUnknowns(parseDefinedVariables(args, definedVariables)));
+  ArgResults parse(List<String> args, Map<String, String> definedVariables) =>
+      _parser.parse(
+          _filterUnknowns(parseDefinedVariables(args, definedVariables)));
 
   List<String> parseDefinedVariables(
       List<String> args, Map<String, String> definedVariables) {
@@ -430,12 +448,10 @@ class CommandLineParser {
   }
 
   List<String> _filterUnknowns(List<String> args) {
-
     // Only filter args if the ignore flag is specified, or if
     // _alwaysIgnoreUnrecognized was set to true.
     if (_alwaysIgnoreUnrecognized ||
         args.contains('--ignore-unrecognized-flags')) {
-
       //TODO(pquitslund): replace w/ the following once library skew issues are
       // sorted out
       //return args.where((arg) => !arg.startsWith('--') ||
