@@ -94,9 +94,6 @@ class Driver {
     // Cache options of interest to inform analysis.
     _setupEnv(options);
 
-    // Process analysis options file (and notify all interested parties).
-    _processAnalysisOptions(options);
-
     // Do analysis.
     if (_isBatch) {
       _BatchRunner.runAsBatch(args, (List<String> args) {
@@ -415,6 +412,9 @@ class Driver {
     contextOptions.lint = options.lints;
     context.analysisOptions = contextOptions;
     _context = context;
+
+    // Process analysis options file (and notify all interested parties).
+    _processAnalysisOptions(options, context);
   }
 
   /// Return discovered packagespec, or `null` if none is found.
@@ -462,7 +462,7 @@ class Driver {
     return folderMap;
   }
 
-  void _processAnalysisOptions(CommandLineOptions options) {
+  void _processAnalysisOptions(CommandLineOptions options, AnalysisContext context) {
     fileSystem.File file = _getOptionsFile(options);
 
     List<OptionsProcessor> optionsProcessors =
@@ -473,7 +473,7 @@ class Driver {
       Map<String, YamlNode> options =
           analysisOptionsProvider.getOptionsFromFile(file);
       optionsProcessors
-          .forEach((OptionsProcessor p) => p.optionsProcessed(options));
+          .forEach((OptionsProcessor p) => p.optionsProcessed(context, options));
     } on Exception catch (e) {
       optionsProcessors.forEach((OptionsProcessor p) => p.onError(e));
     }

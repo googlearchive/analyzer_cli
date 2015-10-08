@@ -8,6 +8,7 @@ library analyzer_cli.test.driver;
 import 'dart:io';
 
 import 'package:analyzer/plugin/options.dart';
+import 'package:analyzer/src/generated/engine.dart';
 import 'package:analyzer/src/plugin/plugin_configuration.dart';
 import 'package:analyzer_cli/src/bootloader.dart';
 import 'package:analyzer_cli/src/driver.dart';
@@ -285,7 +286,8 @@ class TestProcessor extends OptionsProcessor {
   }
 
   @override
-  void optionsProcessed(Map<String, YamlNode> options) {
+  void optionsProcessed(
+      AnalysisContext context, Map<String, YamlNode> options) {
     this.options = options;
   }
 }

@@ -9,6 +9,7 @@ import 'dart:isolate';
 
 import 'package:analyzer/file_system/physical_file_system.dart';
 import 'package:analyzer/source/analysis_options_provider.dart';
+import 'package:analyzer/src/context/context.dart';
 import 'package:analyzer/src/plugin/plugin_configuration.dart';
 import 'package:analyzer_cli/src/driver.dart';
 import 'package:analyzer_cli/src/options.dart';
@@ -135,7 +136,9 @@ class BootLoader {
           new AnalysisOptionsProvider();
       Map<String, YamlNode> options =
           analysisOptionsProvider.getOptionsFromFile(file);
-      _pluginOptionsProcessor.optionsProcessed(options);
+      //TODO(pq): thread in proper context.
+      var temporaryContext = new AnalysisContextImpl();
+      _pluginOptionsProcessor.optionsProcessed(temporaryContext, options);
     } on Exception catch (e) {
       _pluginOptionsProcessor.onError(e);
     }
