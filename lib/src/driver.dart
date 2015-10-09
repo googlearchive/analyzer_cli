@@ -366,7 +366,7 @@ class Driver {
     // that.
     // TODO(paulberry): simplify this logic when strong mode supports the new
     // task model.
-    if (options.strongMode || options.disableNewTaskModel) {
+    if (options.disableNewTaskModel) {
       AnalysisEngine.instance.useTaskModel = false;
     } else {
       AnalysisEngine.instance.useTaskModel = true;
@@ -410,6 +410,7 @@ class Driver {
     contextOptions.generateImplicitErrors = options.showPackageWarnings;
     contextOptions.generateSdkErrors = options.showSdkWarnings;
     contextOptions.lint = options.lints;
+    contextOptions.strongMode = options.strongMode;
     context.analysisOptions = contextOptions;
     _context = context;
 
