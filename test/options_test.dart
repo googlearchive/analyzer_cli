@@ -167,9 +167,8 @@ main() {
 
       test('strong mode', () {
         CommandLineOptions options = CommandLineOptions
-            .parse(['--strong', '--strong-hints', 'foo.dart']);
+            .parse(['--strong', 'foo.dart']);
         expect(options.strongMode, isTrue);
-        expect(options.strongHints, isTrue);
       });
 
       test("can't specify package and package-root", () {

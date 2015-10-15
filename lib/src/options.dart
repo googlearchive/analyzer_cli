@@ -97,11 +97,8 @@ class CommandLineOptions {
   /// Whether to treat warnings as fatal
   final bool warningsAreFatal;
 
-  /// Whether to use package:dev_compiler for strong static checking.
+  /// Whether to use strong static checking.
   final bool strongMode;
-
-  /// Whether to emit hints from [strongMode] analysis.
-  final bool strongHints;
 
   /// Initialize options from the given parsed [args].
   CommandLineOptions._fromArgs(
@@ -129,8 +126,7 @@ class CommandLineOptions {
         showSdkWarnings = args['show-sdk-warnings'] || args['warnings'],
         sourceFiles = args.rest,
         warningsAreFatal = args['fatal-warnings'],
-        strongMode = args['strong'],
-        strongHints = args['strong-hints'];
+        strongMode = args['strong'];
 
   /// Parse [args] into [CommandLineOptions] describing the specified
   /// analyzer options. In case of a format error, calls [printAndFail], which
@@ -308,10 +304,8 @@ class CommandLineOptions {
           defaultsTo: false,
           negatable: false,
           hide: true)
-      // TODO(jmesserly): link to a spec+explainer for these checks.
-      ..addFlag('strong', help: 'Enable strong static checks.', hide: true)
-      ..addFlag('strong-hints',
-          help: 'Enable hints about dynamic operations.', hide: true);
+      ..addFlag('strong',
+          help: 'Enable strong static checks (https://goo.gl/DqcBsw)');
 
     try {
       // TODO(scheglov) https://code.google.com/p/dart/issues/detail?id=11061

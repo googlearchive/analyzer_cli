@@ -16,8 +16,8 @@ import 'utils.dart';
 
 /// End-to-end test for --strong checking.
 ///
-/// Most StrongChecker tests are in dev_compiler/test/checker/*_test.dart, but
-/// this verifies the option is working and producing extra errors as expected.
+/// Most strong mode tests are in Analyzer, but this verifies the option is
+/// working and producing extra errors as expected.
 ///
 /// Generally we don't want a lot of cases here as it requires spinning up a
 /// full analysis context.

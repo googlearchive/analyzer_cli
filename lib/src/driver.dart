@@ -27,7 +27,6 @@ import 'package:analyzer/src/generated/source.dart';
 import 'package:analyzer/src/generated/source_io.dart';
 import 'package:analyzer_cli/src/analyzer_impl.dart';
 import 'package:analyzer_cli/src/options.dart';
-import 'package:dev_compiler/strong_mode.dart';
 import 'package:linter/src/plugin/linter_plugin.dart';
 import 'package:package_config/discovery.dart' as pkgDiscovery;
 import 'package:package_config/packages.dart' show Packages;
@@ -63,10 +62,6 @@ class Driver {
   /// The context that was most recently created by a call to [_analyzeAll], or
   /// `null` if [_analyzeAll] hasn't been called yet.
   AnalysisContext _context;
-
-  /// The strong mode checker corresponding to [_context], or `null` if strong
-  /// mode is not enabled or a context is not available yet.
-  StrongChecker _strongChecker;
 
   /// If [_context] is not `null`, the [CommandLineOptions] that guided its
   /// creation.
@@ -361,16 +356,8 @@ class Driver {
       return;
     }
     _previousOptions = options;
-    // Determine whether the new task model should be used.  Note that strong
-    // mode currently requires the old task model, so we need to account for
-    // that.
-    // TODO(paulberry): simplify this logic when strong mode supports the new
-    // task model.
-    if (options.disableNewTaskModel) {
-      AnalysisEngine.instance.useTaskModel = false;
-    } else {
-      AnalysisEngine.instance.useTaskModel = true;
-    }
+    // Determine whether the new task model should be used.
+    AnalysisEngine.instance.useTaskModel = !options.disableNewTaskModel;
     // Choose a package resolution policy and a diet parsing policy based on
     // the command-line options.
     SourceFactory sourceFactory = _chooseUriResolutionPolicy(options);
@@ -380,13 +367,6 @@ class Driver {
     AnalysisContext context = AnalysisEngine.instance.createAnalysisContext();
 
     context.sourceFactory = sourceFactory;
-
-    if (options.strongMode) {
-      // TODO(jmesserly): support options file
-      var strongOptions = new StrongModeOptions(hints: options.strongHints);
-      // TODO(jmesserly): make StrongChecker an analysis plugin
-      _strongChecker = new StrongChecker(context, strongOptions);
-    }
 
     Map<String, String> definedVariables = options.definedVariables;
     if (!definedVariables.isEmpty) {
@@ -494,7 +474,7 @@ class Driver {
   ErrorSeverity _runAnalyzer(Source source, CommandLineOptions options) {
     int startTime = currentTimeMillis();
     AnalyzerImpl analyzer =
-        new AnalyzerImpl(_context, _strongChecker, source, options, startTime);
+        new AnalyzerImpl(_context, source, options, startTime);
     var errorSeverity = analyzer.analyzeSync();
     if (errorSeverity == ErrorSeverity.ERROR) {
       exitCode = errorSeverity.ordinal;
