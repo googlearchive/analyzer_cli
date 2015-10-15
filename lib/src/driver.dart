@@ -25,6 +25,7 @@ import 'package:analyzer/src/generated/java_io.dart';
 import 'package:analyzer/src/generated/sdk_io.dart';
 import 'package:analyzer/src/generated/source.dart';
 import 'package:analyzer/src/generated/source_io.dart';
+import 'package:analyzer/src/services/lint.dart';
 import 'package:analyzer_cli/src/analyzer_impl.dart';
 import 'package:analyzer_cli/src/options.dart';
 import 'package:linter/src/plugin/linter_plugin.dart';
@@ -49,6 +50,12 @@ StringSink errorSink = stderr;
 ///
 /// *Visible for testing.*
 StringSink outSink = stdout;
+
+/// Test this option map to see if it specifies lint rules.
+bool containsLintRuleEntry(Map<String, YamlNode> options) {
+  var linterNode = options['linter'];
+  return linterNode is YamlMap && linterNode.containsKey('rules');
+}
 
 typedef ErrorSeverity _BatchRunnerHandler(List<String> args);
 
@@ -443,18 +450,24 @@ class Driver {
     return folderMap;
   }
 
-  void _processAnalysisOptions(CommandLineOptions options, AnalysisContext context) {
+  void _processAnalysisOptions(
+      CommandLineOptions options, AnalysisContext context) {
     fileSystem.File file = _getOptionsFile(options);
-
     List<OptionsProcessor> optionsProcessors =
         AnalysisEngine.instance.optionsPlugin.optionsProcessors;
     try {
       AnalysisOptionsProvider analysisOptionsProvider =
           new AnalysisOptionsProvider();
-      Map<String, YamlNode> options =
+      Map<String, YamlNode> optionMap =
           analysisOptionsProvider.getOptionsFromFile(file);
-      optionsProcessors
-          .forEach((OptionsProcessor p) => p.optionsProcessed(context, options));
+      optionsProcessors.forEach(
+          (OptionsProcessor p) => p.optionsProcessed(context, optionMap));
+
+      // Fill in lint rule defaults in case lints are enabled and rules are
+      // not specified in an options file.
+      if (options.lints && !containsLintRuleEntry(optionMap)) {
+        setLints(context, linterPlugin.contributedRules);
+      }
     } on Exception catch (e) {
       optionsProcessors.forEach((OptionsProcessor p) => p.onError(e));
     }
@@ -509,9 +522,8 @@ class Driver {
   }
 
   /// Convert [sourcePath] into an absolute path.
-  static String _normalizeSourcePath(String sourcePath) {
-    return path.normalize(new File(sourcePath).absolute.path);
-  }
+  static String _normalizeSourcePath(String sourcePath) =>
+      path.normalize(new File(sourcePath).absolute.path);
 }
 
 /// Provides a framework to read command line options from stdin and feed them

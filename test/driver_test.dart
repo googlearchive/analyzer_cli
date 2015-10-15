@@ -8,12 +8,13 @@ library analyzer_cli.test.driver;
 import 'dart:io';
 
 import 'package:analyzer/plugin/options.dart';
+import 'package:analyzer/source/analysis_options_provider.dart';
 import 'package:analyzer/src/generated/engine.dart';
 import 'package:analyzer/src/plugin/plugin_configuration.dart';
+import 'package:analyzer/src/services/lint.dart';
 import 'package:analyzer_cli/src/bootloader.dart';
 import 'package:analyzer_cli/src/driver.dart';
 import 'package:analyzer_cli/src/options.dart';
-import 'package:linter/src/plugin/linter_plugin.dart';
 import 'package:path/path.dart' as path;
 import 'package:plugin/plugin.dart';
 import 'package:test/test.dart';
@@ -97,38 +98,123 @@ main() {
     });
 
     group('linter', () {
-      StringSink savedOutSink;
-      Driver driver;
+      group('lints in options', () {
+        StringSink savedOutSink;
+        Driver driver;
 
-      setUp(() {
-        savedOutSink = outSink;
-        outSink = new StringBuffer();
+        setUp(() {
+          savedOutSink = outSink;
+          outSink = new StringBuffer();
 
-        driver = new Driver();
-        driver.start([
-          '--options',
-          'test/data/linter_project/.analysis_options',
-          '--lints',
-          'test/data/linter_project/test_file.dart'
-        ]);
+          driver = new Driver();
+          driver.start([
+            '--options',
+            'test/data/linter_project/.analysis_options',
+            '--lints',
+            'test/data/linter_project/test_file.dart'
+          ]);
+        });
+        tearDown(() {
+          outSink = savedOutSink;
+        });
+
+        test('gets analysis options', () {
+          /// Lints should be enabled.
+          expect(driver.context.analysisOptions.lint, isTrue);
+
+          /// The .analysis_options file only specifies 'camel_case_types'.
+          var lintNames = getLints(driver.context).map((r) => r.name);
+          expect(lintNames, orderedEquals(['camel_case_types']));
+        });
+
+        test('generates lints', () {
+          expect(outSink.toString(),
+              contains('[lint] Name types using UpperCamelCase.'));
+        });
       });
-      tearDown(() {
-        outSink = savedOutSink;
+
+      group('default lints', () {
+        StringSink savedOutSink;
+        Driver driver;
+
+        setUp(() {
+          savedOutSink = outSink;
+          outSink = new StringBuffer();
+
+          driver = new Driver();
+          driver.start(['--lints', 'test/data/linter_project/test_file.dart']);
+        });
+        tearDown(() {
+          outSink = savedOutSink;
+        });
+
+        test('gets default lints', () {
+          /// Lints should be enabled.
+          expect(driver.context.analysisOptions.lint, isTrue);
+
+          /// Default list should include camel_case_types.
+          var lintNames = getLints(driver.context).map((r) => r.name);
+          expect(lintNames, contains('camel_case_types'));
+        });
+
+        test('generates lints', () {
+          expect(outSink.toString(),
+              contains('[lint] Name types using UpperCamelCase.'));
+        });
       });
 
-      test('gets analysis options', () {
-        /// Lints should be enabled.
-        expect(driver.context.analysisOptions.lint, isTrue);
+      group('no `--lints` flag', () {
+        StringSink savedOutSink;
+        Driver driver;
 
-        /// The .analysis_options file only specifies 'camel_case_types'.
-        var lintNames = linterPlugin.lintRules.map((r) => r.name);
-        expect(lintNames, orderedEquals(['camel_case_types']));
-      });
+        setUp(() {
+          savedOutSink = outSink;
+          outSink = new StringBuffer();
 
-      test('generates lints', () {
-        expect(outSink.toString(),
-            contains('[lint] Name types using UpperCamelCase.'));
+          driver = new Driver();
+          driver.start(['test/data/linter_project/test_file.dart']);
+        });
+        tearDown(() {
+          outSink = savedOutSink;
+        });
+
+        test('lints disabled', () {
+          expect(driver.context.analysisOptions.lint, isFalse);
+        });
+
+        test('no registered lints', () {
+          expect(getLints(driver.context), isEmpty);
+        });
+
+        test('no generated warnings', () {
+          expect(outSink.toString(), contains('No issues found'));
+        });
       });
+    });
+
+    test('containsLintRuleEntry', () {
+      Map<String, YamlNode> options;
+      options = parseOptions('''
+linter:
+  rules:
+    - foo
+        ''');
+      expect(containsLintRuleEntry(options), true);
+      options = parseOptions('''
+        ''');
+      expect(containsLintRuleEntry(options), false);
+      options = parseOptions('''
+linter:
+  rules:
+    # - foo
+        ''');
+      expect(containsLintRuleEntry(options), true);
+      options = parseOptions('''
+linter:
+ # rules:
+    # - foo
+        ''');
+      expect(containsLintRuleEntry(options), false);
     });
 
     group('in temp directory', () {
@@ -257,6 +343,9 @@ main() {}
     });
   });
 }
+
+Map<String, YamlNode> parseOptions(String src) =>
+    new AnalysisOptionsProvider().getOptionsFromString(src);
 
 class TestPlugin extends Plugin {
   TestProcessor processor;

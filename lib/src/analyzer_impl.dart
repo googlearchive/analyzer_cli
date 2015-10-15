@@ -18,7 +18,6 @@ import 'package:analyzer/src/generated/source_io.dart';
 import 'package:analyzer/src/generated/utilities_general.dart';
 import 'package:analyzer_cli/src/driver.dart';
 import 'package:analyzer_cli/src/error_formatter.dart';
-import 'package:analyzer_cli/src/lint.dart';
 import 'package:analyzer_cli/src/options.dart';
 
 DirectoryBasedDartSdk sdk;
@@ -139,10 +138,6 @@ class AnalyzerImpl {
   void setupForAnalysis() {
     sources.clear();
     errorInfos.clear();
-    // Register lints.
-    if (options.lints) {
-      registerLints();
-    }
     Uri libraryUri = librarySource.uri;
     if (libraryUri.scheme == 'package' && libraryUri.pathSegments.length > 0) {
       _selfPackageName = libraryUri.pathSegments[0];
