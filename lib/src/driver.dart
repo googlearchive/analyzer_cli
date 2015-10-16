@@ -155,12 +155,36 @@ class Driver {
     }
     _context.applyChanges(changeSet);
 
-    // Analyze the files.
+    // Analyze the libraries.
     ErrorSeverity allResult = ErrorSeverity.NONE;
+    var libUris = <Uri>[];
+    var parts = <Source>[];
     for (Source source in sourcesToAnalyze) {
+      if (context.computeKindOf(source) == SourceKind.PART) {
+        parts.add(source);
+        continue;
+      }
       ErrorSeverity status = _runAnalyzer(source, options);
       allResult = allResult.max(status);
+      libUris.add(source.uri);
     }
+
+    // Check that each part has a corresponding source in the input list.
+    for (Source part in parts) {
+      bool found = false;
+      for (var lib in context.getLibrariesContaining(part)) {
+        if (libUris.contains(lib.uri)) {
+          found = true;
+        }
+      }
+      if (!found) {
+        errorSink.writeln("${part.fullName} is a part and cannot be analyzed.");
+        errorSink.writeln("Please pass in a library that contains this part.");
+        exitCode = ErrorSeverity.ERROR.ordinal;
+        allResult = allResult.max(ErrorSeverity.ERROR);
+      }
+    }
+
     return allResult;
   }
 

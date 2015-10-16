@@ -95,6 +95,31 @@ main() {
         driver.start(['test/data/NO_DART_FILE_HERE.dart']);
         expect(exitCode, 3);
       });
+
+      test('part file', () {
+        Driver driver = new Driver();
+        driver.start(['test/data/library_and_parts/part2.dart']);
+        expect(exitCode, 3);
+      });
+
+      test('non-dangling part file', () {
+        Driver driver = new Driver();
+        driver.start([
+          'test/data/library_and_parts/lib.dart',
+          'test/data/library_and_parts/part1.dart',
+        ]);
+        expect(exitCode, 0);
+      });
+
+      test('extra part file', () {
+        Driver driver = new Driver();
+        driver.start([
+          'test/data/library_and_parts/lib.dart',
+          'test/data/library_and_parts/part1.dart',
+          'test/data/library_and_parts/part2.dart',
+        ]);
+        expect(exitCode, 3);
+      });
     });
 
     group('linter', () {

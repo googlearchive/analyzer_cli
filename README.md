@@ -58,7 +58,7 @@ The following are advanced options to use with dartanalyzer:
   Run in batch mode.
 
 * `--dart-sdk=`<br>
-  Specify the directory that contans the Dart SDK.
+  Specify the directory that contains the Dart SDK.
 
 * `--fatal-warnings`<br>
   Except for type warnings, treat warnings as fatal.

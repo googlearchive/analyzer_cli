@@ -191,7 +191,7 @@ class CommandLineOptions {
     var parser = new CommandLineParser()
       ..addFlag('batch',
           abbr: 'b',
-          help: 'Run in batch mode.',
+          help: 'Read commands from standard input (for testing).',
           defaultsTo: false,
           negatable: false)
       ..addOption('dart-sdk', help: 'The path to the Dart SDK.')
