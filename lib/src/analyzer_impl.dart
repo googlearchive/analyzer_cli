@@ -34,6 +34,7 @@ class AnalyzerImpl {
 
   final AnalysisContext context;
   final Source librarySource;
+
   /// All [Source]s references by the analyzed library.
   final Set<Source> sources = new Set<Source>();
 
@@ -148,8 +149,9 @@ class AnalyzerImpl {
   ErrorSeverity _analyzeSync(int printMode) {
     // Don't try to analyze parts.
     if (context.computeKindOf(librarySource) == SourceKind.PART) {
-      print("Only libraries can be analyzed.");
-      print("${librarySource.fullName} is a part and can not be analyzed.");
+      stderr.writeln("Only libraries can be analyzed.");
+      stderr.writeln(
+          "${librarySource.fullName} is a part and can not be analyzed.");
       return ErrorSeverity.ERROR;
     }
     // Resolve library.
@@ -177,8 +179,7 @@ class AnalyzerImpl {
     if (error.errorCode.type == ErrorType.TODO) {
       return false;
     }
-    if (computeSeverity(error, options) ==
-            ErrorSeverity.INFO &&
+    if (computeSeverity(error, options) == ErrorSeverity.INFO &&
         options.disableHints) {
       return false;
     }
@@ -234,7 +235,7 @@ class AnalyzerImpl {
   ///   compile time errors to a severity of [ErrorSeverity.INFO].
   ///   * if [options.hintsAreFatal] is true, escalate hints to errors.
   static ErrorSeverity computeSeverity(
-    AnalysisError error, CommandLineOptions options) {
+      AnalysisError error, CommandLineOptions options) {
     if (!options.enableTypeChecks &&
         error.errorCode.type == ErrorType.CHECKED_MODE_COMPILE_TIME_ERROR) {
       return ErrorSeverity.INFO;

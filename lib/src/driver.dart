@@ -135,14 +135,14 @@ class Driver {
       sourcePath = sourcePath.trim();
       // Check that file exists.
       if (!new File(sourcePath).existsSync()) {
-        print('File not found: $sourcePath');
+        stderr.writeln('File not found: $sourcePath');
         exitCode = ErrorSeverity.ERROR.ordinal;
         //Fail fast; don't analyze more files
         return ErrorSeverity.ERROR;
       }
       // Check that file is Dart file.
       if (!AnalysisEngine.isDartFileName(sourcePath)) {
-        print('$sourcePath is not a Dart file');
+        stderr.writeln('$sourcePath is not a Dart file');
         exitCode = ErrorSeverity.ERROR.ordinal;
         // Fail fast; don't analyze more files.
         return ErrorSeverity.ERROR;

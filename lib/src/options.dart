@@ -16,9 +16,9 @@ const _binaryName = 'dartanalyzer';
 /// *Visible for testing.*
 ExitHandler exitHandler = exit;
 
-/// Print the given message and exit with the given [exitCode]
+/// Print the given message to stderr and exit with the given [exitCode]
 void printAndFail(String message, {int exitCode: 15}) {
-  print(message);
+  stderr.writeln(message);
   exitHandler(exitCode);
 }
 
@@ -130,7 +130,7 @@ class CommandLineOptions {
 
   /// Parse [args] into [CommandLineOptions] describing the specified
   /// analyzer options. In case of a format error, calls [printAndFail], which
-  /// by default prints an error message and exits.
+  /// by default prints an error message to stderr and exits.
   static CommandLineOptions parse(List<String> args,
       [printAndFail = printAndFail]) {
     CommandLineOptions options = _parse(args);
@@ -166,7 +166,7 @@ class CommandLineOptions {
 
     // OK.  Report deprecated options.
     if (options.enableNullAwareOperators) {
-      print(
+      stderr.writeln(
           "Info: Option '--enable-null-aware-operators' is no longer needed. Null aware operators are supported by default.");
     }
 
@@ -321,7 +321,7 @@ class CommandLineOptions {
       // Batch mode and input files.
       if (results['batch']) {
         if (results.rest.isNotEmpty) {
-          print('No source files expected in the batch mode.');
+          stderr.writeln('No source files expected in the batch mode.');
           _showUsage(parser);
           exit(15);
         }
@@ -336,17 +336,19 @@ class CommandLineOptions {
       }
       return new CommandLineOptions._fromArgs(results, definedVariables);
     } on FormatException catch (e) {
-      print(e.message);
+      stderr.writeln(e.message);
       _showUsage(parser);
       exit(15);
     }
   }
 
   static _showUsage(parser) {
-    print('Usage: $_binaryName [options...] <libraries to analyze...>');
-    print(parser.getUsage());
-    print('');
-    print('For more information, see http://www.dartlang.org/tools/analyzer.');
+    stderr
+        .writeln('Usage: $_binaryName [options...] <libraries to analyze...>');
+    stderr.writeln(parser.getUsage());
+    stderr.writeln('');
+    stderr.writeln(
+        'For more information, see http://www.dartlang.org/tools/analyzer.');
   }
 }
 
