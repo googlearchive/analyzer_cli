@@ -453,7 +453,7 @@ class Driver {
             exitCode: ErrorSeverity.ERROR.ordinal);
       }
     } else {
-      filePath = AnalysisOptionsProvider.ANALYSIS_OPTIONS_NAME;
+      filePath = AnalysisEngine.ANALYSIS_OPTIONS_FILE;
       file = PhysicalResourceProvider.INSTANCE.getFile(filePath);
     }
     return file;
