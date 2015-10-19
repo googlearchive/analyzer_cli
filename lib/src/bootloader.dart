@@ -10,6 +10,7 @@ import 'dart:isolate';
 import 'package:analyzer/file_system/physical_file_system.dart';
 import 'package:analyzer/source/analysis_options_provider.dart';
 import 'package:analyzer/src/context/context.dart';
+import 'package:analyzer/src/generated/engine.dart' as engine;
 import 'package:analyzer/src/plugin/plugin_configuration.dart';
 import 'package:analyzer_cli/src/driver.dart';
 import 'package:analyzer_cli/src/options.dart';
@@ -127,9 +128,8 @@ class BootLoader {
 
   void _processAnalysisOptions(CommandLineOptions options) {
     // Determine options file path.
-    var filePath = options.analysisOptionsFile != null
-        ? options.analysisOptionsFile
-        : AnalysisOptionsProvider.ANALYSIS_OPTIONS_NAME;
+    var filePath = options.analysisOptionsFile ??
+        engine.AnalysisEngine.ANALYSIS_OPTIONS_FILE;
     try {
       var file = PhysicalResourceProvider.INSTANCE.getFile(filePath);
       AnalysisOptionsProvider analysisOptionsProvider =
