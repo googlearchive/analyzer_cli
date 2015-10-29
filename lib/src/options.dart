@@ -6,6 +6,7 @@ library analyzer_cli.src.options;
 
 import 'dart:io';
 
+import 'package:analyzer_cli/src/driver.dart';
 import 'package:args/args.dart';
 import 'package:cli_util/cli_util.dart' show getSdkDir;
 
@@ -18,7 +19,7 @@ ExitHandler exitHandler = exit;
 
 /// Print the given message to stderr and exit with the given [exitCode]
 void printAndFail(String message, {int exitCode: 15}) {
-  stderr.writeln(message);
+  errorSink.writeln(message);
   exitHandler(exitCode);
 }
 

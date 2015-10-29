@@ -3,7 +3,6 @@
 // BSD-style license that can be found in the LICENSE file.
 
 @TestOn("vm")
-
 library analyzer_cli.test.strong_mode;
 
 import 'dart:io';
@@ -12,6 +11,7 @@ import 'package:analyzer_cli/src/driver.dart' show Driver, errorSink, outSink;
 import 'package:path/path.dart' as path;
 import 'package:test/test.dart';
 
+import 'driver_test.dart';
 import 'utils.dart';
 
 /// End-to-end test for --strong checking.
@@ -40,7 +40,7 @@ void main() {
 
     test('produces stricter errors', () async {
       var testPath = path.join(testDirectory, 'data/strong_example.dart');
-      new Driver().start(['--strong', testPath]);
+      new Driver().start(['--options', emptyOptionsFile, '--strong', testPath]);
 
       expect(exitCode, 3);
       var stdout = outSink.toString();

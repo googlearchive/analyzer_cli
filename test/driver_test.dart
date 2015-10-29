@@ -10,6 +10,8 @@ import 'dart:io';
 import 'package:analyzer/plugin/options.dart';
 import 'package:analyzer/source/analysis_options_provider.dart';
 import 'package:analyzer/src/generated/engine.dart';
+import 'package:analyzer/src/generated/error.dart';
+import 'package:analyzer/src/generated/source.dart';
 import 'package:analyzer/src/plugin/plugin_configuration.dart';
 import 'package:analyzer/src/services/lint.dart';
 import 'package:analyzer_cli/src/bootloader.dart';
@@ -22,6 +24,21 @@ import 'package:yaml/src/yaml_node.dart';
 
 main() {
   group('Driver', () {
+    StringSink savedOutSink, savedErrorSink;
+    int savedExitCode;
+    setUp(() {
+      savedOutSink = outSink;
+      savedErrorSink = errorSink;
+      savedExitCode = exitCode;
+      outSink = new StringBuffer();
+      errorSink = new StringBuffer();
+    });
+    tearDown(() {
+      outSink = savedOutSink;
+      errorSink = savedErrorSink;
+      exitCode = savedExitCode;
+    });
+
     group('options', () {
       test('custom processor', () {
         Driver driver = new Driver();
@@ -38,67 +55,62 @@ main() {
     });
 
     group('exit codes', () {
+      StringSink savedOutSink, savedErrorSink;
       int savedExitCode;
       ExitHandler savedExitHandler;
       setUp(() {
+        savedOutSink = outSink;
+        savedErrorSink = errorSink;
         savedExitCode = exitCode;
         savedExitHandler = exitHandler;
         exitHandler = (code) => exitCode = code;
+        outSink = new StringBuffer();
+        errorSink = new StringBuffer();
       });
       tearDown(() {
+        outSink = savedOutSink;
+        errorSink = savedErrorSink;
         exitCode = savedExitCode;
         exitHandler = savedExitHandler;
       });
 
       test('fatal hints', () {
-        Driver driver = new Driver();
-        driver.start(['--fatal-hints', 'test/data/file_with_hint.dart']);
+        drive('test/data/file_with_hint.dart', args: ['--fatal-hints']);
         expect(exitCode, 3);
       });
 
       test('not fatal hints', () {
-        Driver driver = new Driver();
-        driver.start(['test/data/file_with_hint.dart']);
+        drive('test/data/file_with_hint.dart');
         expect(exitCode, 0);
       });
 
       test('fatal errors', () {
-        Driver driver = new Driver();
-        driver.start(['test/data/file_with_error.dart']);
+        drive('test/data/file_with_error.dart');
         expect(exitCode, 3);
       });
 
       test('not fatal warnings', () {
-        Driver driver = new Driver();
-        driver.start(['test/data/file_with_warning.dart']);
+        drive('test/data/file_with_warning.dart');
         expect(exitCode, 0);
       });
 
       test('fatal warnings', () {
-        Driver driver = new Driver();
-        driver.start(['--fatal-warnings', 'test/data/file_with_warning.dart']);
+        drive('test/data/file_with_warning.dart', args: ['--fatal-warnings']);
         expect(exitCode, 3);
       });
 
       test('missing options file', () {
-        Driver driver = new Driver();
-        driver.start([
-          '--options',
-          'test/data/NO_OPTIONS_HERE',
-          'test/data/test_file.dart'
-        ]);
+        drive('test/data/test_file.dart', options: 'test/data/NO_OPTIONS_HERE');
         expect(exitCode, 3);
       });
 
       test('missing dart file', () {
-        Driver driver = new Driver();
-        driver.start(['test/data/NO_DART_FILE_HERE.dart']);
+        drive('test/data/NO_DART_FILE_HERE.dart');
         expect(exitCode, 3);
       });
 
       test('part file', () {
-        Driver driver = new Driver();
-        driver.start(['test/data/library_and_parts/part2.dart']);
+        drive('test/data/library_and_parts/part2.dart');
         expect(exitCode, 3);
       });
 
@@ -167,7 +179,12 @@ main() {
           outSink = new StringBuffer();
 
           driver = new Driver();
-          driver.start(['--lints', 'test/data/linter_project/test_file.dart']);
+          driver.start([
+            '--lints',
+            'test/data/linter_project/test_file.dart',
+            '--options',
+            'test/data/linter_project/.analysis_options'
+          ]);
         });
         tearDown(() {
           outSink = savedOutSink;
@@ -188,7 +205,7 @@ main() {
         });
       });
 
-      group('no `--lints` flag', () {
+      group('no `--lints` flag (none in options)', () {
         StringSink savedOutSink;
         Driver driver;
 
@@ -197,7 +214,11 @@ main() {
           outSink = new StringBuffer();
 
           driver = new Driver();
-          driver.start(['test/data/linter_project/test_file.dart']);
+          driver.start([
+            'test/data/no_lints_project/test_file.dart',
+            '--options',
+            'test/data/no_lints_project/.analysis_options'
+          ]);
         });
         tearDown(() {
           outSink = savedOutSink;
@@ -240,6 +261,44 @@ linter:
     # - foo
         ''');
       expect(containsLintRuleEntry(options), false);
+    });
+
+    group('options processing', () {
+      group('error filters', () {
+        StringSink savedOutSink;
+        Driver driver;
+
+        setUp(() {
+          savedOutSink = outSink;
+          outSink = new StringBuffer();
+
+          driver = new Driver();
+          driver.start([
+            'test/data/options_tests_project/test_file.dart',
+            '--options',
+            'test/data/options_tests_project/.analysis_options'
+          ]);
+        });
+        tearDown(() {
+          outSink = savedOutSink;
+        });
+
+        test('filters', () {
+          var filters =
+              driver.context.getConfigurationData(CONFIGURED_ERROR_FILTERS);
+          expect(filters, hasLength(1));
+
+          var unused_error = new AnalysisError(
+              new TestSource(), 0, 1, HintCode.UNUSED_LOCAL_VARIABLE, [
+            ['x']
+          ]);
+          expect(filters.any((filter) => filter(unused_error)), isTrue);
+        });
+
+        test('language config', () {
+          expect(driver.context.analysisOptions.enableSuperMixins, isTrue);
+        });
+      });
     });
 
     group('in temp directory', () {
@@ -369,6 +428,17 @@ main() {}
   });
 }
 
+const emptyOptionsFile = 'test/data/empty_options.yaml';
+
+/// Start a driver for the given [source], optionally providing additional
+/// [args] and an [options] file path.  The value of [options] defaults to
+/// an empty options file to avoid unwanted configuration from an otherwise
+/// discovered options file.
+void drive(String source,
+        {String options: emptyOptionsFile,
+        List<String> args: const <String>[]}) =>
+    new Driver().start(['--options', options, source]..addAll(args));
+
 Map<String, YamlNode> parseOptions(String src) =>
     new AnalysisOptionsProvider().getOptionsFromString(src);
 
@@ -404,4 +474,11 @@ class TestProcessor extends OptionsProcessor {
       AnalysisContext context, Map<String, YamlNode> options) {
     this.options = options;
   }
+}
+
+class TestSource implements Source {
+  TestSource();
+
+  @override
+  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }

@@ -26,6 +26,7 @@ import 'package:analyzer/src/generated/sdk_io.dart';
 import 'package:analyzer/src/generated/source.dart';
 import 'package:analyzer/src/generated/source_io.dart';
 import 'package:analyzer/src/services/lint.dart';
+import 'package:analyzer/src/task/options.dart';
 import 'package:analyzer_cli/src/analyzer_impl.dart';
 import 'package:analyzer_cli/src/options.dart';
 import 'package:linter/src/plugin/linter_plugin.dart';
@@ -135,14 +136,14 @@ class Driver {
       sourcePath = sourcePath.trim();
       // Check that file exists.
       if (!new File(sourcePath).existsSync()) {
-        stderr.writeln('File not found: $sourcePath');
+        errorSink.writeln('File not found: $sourcePath');
         exitCode = ErrorSeverity.ERROR.ordinal;
         //Fail fast; don't analyze more files
         return ErrorSeverity.ERROR;
       }
       // Check that file is Dart file.
       if (!AnalysisEngine.isDartFileName(sourcePath)) {
-        stderr.writeln('$sourcePath is not a Dart file');
+        errorSink.writeln('$sourcePath is not a Dart file');
         exitCode = ErrorSeverity.ERROR.ordinal;
         // Fail fast; don't analyze more files.
         return ErrorSeverity.ERROR;
@@ -491,6 +492,11 @@ class Driver {
       // not specified in an options file.
       if (options.lints && !containsLintRuleEntry(optionMap)) {
         setLints(context, linterPlugin.contributedRules);
+      }
+
+      // Ask engine to further process options.
+      if (optionMap != null) {
+        configureContextOptions(context, optionMap);
       }
     } on Exception catch (e) {
       optionsProcessors.forEach((OptionsProcessor p) => p.onError(e));
