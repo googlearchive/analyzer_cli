@@ -39,9 +39,6 @@ class CommandLineOptions {
   /// A table mapping the names of defined variables to their values.
   final Map<String, String> definedVariables;
 
-  /// Whether to disable the new task model.
-  final bool disableNewTaskModel;
-
   /// Whether to report hints
   final bool disableHints;
 
@@ -108,7 +105,6 @@ class CommandLineOptions {
         this.definedVariables = definedVariables,
         analysisOptionsFile = args['options'],
         disableHints = args['no-hints'],
-        disableNewTaskModel = args['disable-new-task-model'],
         displayVersion = args['version'],
         enableNullAwareOperators = args['enable-null-aware-operators'],
         enableStrictCallChecks = args['enable-strict-call-checks'],
@@ -260,11 +256,6 @@ class CommandLineOptions {
       //
       // Hidden flags.
       //
-      ..addFlag('disable-new-task-model',
-          help: 'Disable the use of the new task model.',
-          defaultsTo: false,
-          negatable: false,
-          hide: true)
       ..addFlag('enable-async',
           help: 'Enable support for the proposed async feature.',
           defaultsTo: false,

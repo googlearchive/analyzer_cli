@@ -231,9 +231,6 @@ class Driver {
     if (options.enableSuperMixins != _previousOptions.enableSuperMixins) {
       return false;
     }
-    if (options.disableNewTaskModel != _previousOptions.disableNewTaskModel) {
-      return false;
-    }
     return true;
   }
 
@@ -388,8 +385,6 @@ class Driver {
       return;
     }
     _previousOptions = options;
-    // Determine whether the new task model should be used.
-    AnalysisEngine.instance.useTaskModel = !options.disableNewTaskModel;
     // Choose a package resolution policy and a diet parsing policy based on
     // the command-line options.
     SourceFactory sourceFactory = _chooseUriResolutionPolicy(options);
